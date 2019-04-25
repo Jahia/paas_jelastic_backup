@@ -1,0 +1,95 @@
+type: install
+version: 1.5
+name: Jahia - Digital Experience Manager Restore
+logo: /images/jahia-restore-logo-70x70.png
+id: jahia-dem-restore-7302
+description:
+  short: Jahia - Digital Experience Manager Restore
+  text: Allows to restore your Jahia environment from existing backup
+baseUrl: https://raw.githubusercontent.com/Jahia/jelastic-package-dev/master/dx7302
+
+onBeforeInit: https://raw.githubusercontent.com/Jahia/jelastic-package-dev/master/dx7302/backup/scripts/restoreOnBeforeInit.js
+
+onInstall:
+  - if (settings.envCreated != 'true'):
+    - install:
+        jps: ${baseUrl}/dx-cluster.yml?_r=${fn.random}
+        envName: ${settings.newEnvName}
+        region: ${settings.targetRegion}
+        settings:
+          skipStart: 'true'
+          toolspwd: ${settings.toolsPwd}
+          rootpwd: ${settings.rootPwd}
+    - install:
+        jps: ${baseUrl}/backup/restore.yml?_r=${fn.random}
+        envName: ${settings.newEnvName}
+        region: ${settings.targetRegion}
+        settings:
+          envCreated: 'true'
+          envName: ${settings.envName}
+          backupDir: ${settings.backupDir}
+          newEnvName: ${settings.newEnvName}
+          targetRegion: ${settings.targetRegion}
+    - return:
+        type: success
+        startPage: ${response.startPage}
+        
+  - if (settings.envCreated == 'true'): 
+     - script: ${baseUrl}/backup/scripts/getFtpCredentials.js?_r=${fn.random}
+     - restoreBackup:
+         ftpUser: ${response.ftpUser}
+         ftpPassword: ${response.ftpPassword}
+         ftpHost: ${response.ftpHost}
+     - return:
+         type: success
+         startPage: ${env.url}
+
+actions:
+  restoreBackup:
+    - cmd[proc]: |-
+        yum -y install lftp
+        wget -q ftp://${this.ftpUser}:${this.ftpPassword}@${this.ftpHost}/${settings.envName}/${settings.backupDir}/jahia.sql
+        mysql -u$DB_USER -p$DB_PASSWORD -h mysqldb < jahia.sql; rm -f jahia.sql
+        rm -rf /data; wget -q ftp://${this.ftpUser}:${this.ftpPassword}@${this.ftpHost}/${settings.envName}/${settings.backupDir}/data.tar.gz; 
+        tar -xf data.tar.gz -C /; rm -f data.tar.gz; 
+        cd /opt/tomcat/webapps/ROOT/WEB-INF/lib/
+        mngr_pwd=$(/usr/java/latest/bin/jjs -cp ./jahia-commons-1.0.6.jar:./jasypt-1.9.1-lite.jar -scripting <<< "print(org.jahia.commons.encryption.EncryptionUtils.pbkdf2Digest(\$ENV.MANAGER_PASSWORD, \"p\"))")
+        sed -i "s|^jahiaToolManagerPassword .*$|jahiaToolManagerPassword = $mngr_pwd|" $STACK_PATH/conf/digital-factory-config/jahia/jahia.properties
+        echo $SUPER_USER_PASSWORD > $DATA_PATH/digital-factory-data/root.pwd
+        chown -R tomcat:tomcat $DATA_PATH/digital-factory-data/root.pwd
+        touch $DATA_PATH/digital-factory-data/backup-restore
+      user: root
+      
+    - cmd[es]: |-
+        yum -y install lftp
+        wget -q ftp://${this.ftpUser}:${this.ftpPassword}@${this.ftpHost}/${settings.envName}/${settings.backupDir}/es.tar.gz
+        tar -xf es.tar.gz -C /
+        #chown -R elasticsearch:elasticsearch /var/lib/elasticsearch/backup/
+        #CT='Content-Type:application/json'
+        #curl -H $CT -X POST http://${nodes.es.master.address}:9200/_all/_close
+        #curl -H $CT -X PUT -d '{"type":"fs","settings":{"location":"all"}}' http://${nodes.es.master.address}:9200/_snapshot/all
+        #curl -H $CT -X POST http://${nodes.es.master.address}:9200/_snapshot/all/snapshot/_restore
+        #rm -f es.tar.gz
+      user: root
+      
+    - api: env.control.ExecDockerRunCmd
+      nodeId: ${nodes.proc.first.id}
+
+    - forEach(nodes.cp):
+        api: env.control.ExecDockerRunCmd
+        nodeId: ${@i.id}
+
+success:
+  text: Application has been restored to the new environment **${settings.newEnvName}**!
+settings:
+  fields: 
+  - name: rootPwd
+    type: string
+    caption: Jahia DX root password
+    vtype: text
+    required: true
+  - name: toolsPwd
+    type: string
+    caption: Jahia tools password
+    vtype: text
+    required: true 
