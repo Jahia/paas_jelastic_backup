@@ -1,8 +1,0 @@
-//@auth
-//@req(envName)
-
-include_once com.hivext.scripting.lib.JahiaStorage;
-
-hivext.local.ReturnResult(
-    new JahiaStorage(appid, session, "jahia-storage").getBackups(envName)
-);
