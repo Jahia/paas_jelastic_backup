@@ -1,0 +1,59 @@
+---
+type: update
+version: 1.5
+name: Jahia - Snapshots an environment and stores it in a S3 bucket
+logo: /images/jahia-logo-70x70.png
+id: jahia-backup-to-s3
+baseUrl: https://raw.githubusercontent.com/Jahia/paas_jelastic_backup/wip_backrest
+
+
+onInstall:
+  - cmd [proc]:
+      - sudo yum install -y python36 python36-pip
+      - pip3 install boto3
+      - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git pull; else git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; fi
+  - cmd [proc]:
+      - tar -czvf digital-factory-data.tar.gz /data/digital-factory-data/
+      - python3 backrest.py --accesskey ${settings.aws_access_key} --secretkey ${settings.aws_secret_key} -a upload --bucket_name paas_${settings.env}_${env.uid}_${env.envName} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz -t ${settings.timestamp} -m manual
+      - rm -f digital-factory-data.tar.gz
+      - mysqldump --hex-blob --user=$DB_USER --password=$DB_PASSWORD -h mysqldb --single-transaction --quote-names --opt --databases --compress jahia | gzip > jahia.sql.gz
+      - python upload_to_s3.py jahia.sql.tar.gz ${settings.backup_name} ${settings.aws_access_key} ${settings.aws_secret_key}
+      - python3 backrest.py --accesskey ${settings.aws_access_key} --secretkey ${settings.aws_secret_key} -a upload --bucket_name paas_${settings.env}_${env.uid}_${env.envName} --backupname ${settings.backup_name} -f jahia.sql.gz -t ${settings.timestamp} -m manual
+      - rm -f jahia.sql.gz
+      - tar -czvf digital-factory-config.tar.gz /opt/tomcat/conf/digital-factory-config/
+      - python3 backrest.py --accesskey ${settings.aws_access_key} --secretkey ${settings.aws_secret_key} -a upload --bucket_name paas_${settings.env}_${env.uid}_${env.envName} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz -t ${settings.timestamp} -m manual
+      - rm -f digital-factory-config.tar.gz
+
+settings:
+  fields:
+    - name: backup_name
+      type: string
+      caption: Backup Name
+      vtype: text
+      required: true
+    - name: aws_access_key
+      type: string
+      caption: AWS Access Key
+      vtype: text
+      required: true
+    - name: aws_secret_key
+      type: string
+      caption: AWS Secret Key
+      vtype: text
+      required: true
+    - name: gitrepo
+      caption: backrest git repo url
+      type: string
+      default: https://github.com/Jahia/paas_jelastic_backup.git
+    - name: gitbranch
+      caption: git repo branch to use
+      default: wip_backrest
+      type: string
+    - name: env
+      type: string
+      required: true
+      default: prod
+    - name: timestamp
+      caption: timestamp in format %Y-%m-%dT%H:%M:00
+      required: true
+      type: string
