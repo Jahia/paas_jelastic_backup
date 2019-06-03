@@ -15,13 +15,13 @@ onInstall:
   - cmd [proc]:
       - cd paas_jelastic_backup
       - tar -czvf digital-factory-data.tar.gz /data/digital-factory-data/
-      - python3 backrest.py --accesskey "${settings.aws_access_key}" --secretkey "${settings.aws_secret_key}" -a upload --bucket_name paas_${settings.env}_${env.uid}_${env.envName} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz -t "${settings.timestamp}" -m manual
+      - python3 backrest.py --accesskey "${settings.aws_access_key}" --secretkey "${settings.aws_secret_key}" -a upload --bucketname paas_${settings.env}_${env.uid}_${env.envName} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz -t "${settings.timestamp}" -m manual
       - rm -f digital-factory-data.tar.gz
       - mysqldump --hex-blob --user=$DB_USER --password=$DB_PASSWORD -h mysqldb --single-transaction --quote-names --opt --databases --compress jahia | gzip > jahia.sql.gz
-      - python3 backrest.py --accesskey "${settings.aws_access_key}" --secretkey "${settings.aws_secret_key}" -a upload --bucket_name paas_${settings.env}_${env.uid}_${env.envName} --backupname ${settings.backup_name} -f jahia.sql.gz -t "${settings.timestamp}" -m manual
+      - python3 backrest.py --accesskey "${settings.aws_access_key}" --secretkey "${settings.aws_secret_key}" -a upload --bucketname paas_${settings.env}_${env.uid}_${env.envName} --backupname ${settings.backup_name} -f jahia.sql.gz -t "${settings.timestamp}" -m manual
       - rm -f jahia.sql.gz
       - tar -czvf digital-factory-config.tar.gz /opt/tomcat/conf/digital-factory-config/
-      - python3 backrest.py --accesskey "${settings.aws_access_key}" --secretkey "${settings.aws_secret_key}" -a upload --bucket_name paas_${settings.env}_${env.uid}_${env.envName} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz -t "${settings.timestamp}" -m manual
+      - python3 backrest.py --accesskey "${settings.aws_access_key}" --secretkey "${settings.aws_secret_key}" -a upload --bucketname paas_${settings.env}_${env.uid}_${env.envName} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz -t "${settings.timestamp}" -m manual
       - rm -f digital-factory-config.tar.gz
 
 settings:
