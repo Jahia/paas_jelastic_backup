@@ -40,7 +40,7 @@ def argparser():
     #                     choices=['aws'])
     parser.add_argument("-t", "--timestamp",
                         help="timestamp in format %%Y-%%m-%%dT%%H:%%M:00",
-                        required=True)
+                        required=False)
     parser.add_argument("-m", "--mode",
                         help="this is a manual launch or auto launch ?",
                         choices=['auto', 'manual'])
