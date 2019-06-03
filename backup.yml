@@ -11,6 +11,8 @@ onInstall:
   - cmd [proc]:
       - sudo yum install -y python36 python36-pip
       - pip3 install boto3
+      - [ ! -d ~/.aws ] && mkdir ~/.aws
+		  - printf "[default]\naws_access_key_id= %s\naws_secret_access_key = %s\nregion = %s" "$a" "$b" "$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST)" > ~/.aws/credentials
       - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git pull; else git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; fi
   - cmd [proc]:
       - cd paas_jelastic_backup
