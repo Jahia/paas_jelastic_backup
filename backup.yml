@@ -20,18 +20,24 @@ onInstall:
   - cmd [proc]:
       - cd paas_jelastic_backup
       - tar -czvf digital-factory-data.tar.gz /data/digital-factory-data/
-      - python3 backrest.py --accesskey "${settings.aws_access_key}" --secretkey "${settings.aws_secret_key}" -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz -t "${settings.timestamp}" -m manual
+      - python3 backrest.py -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz -t "${settings.timestamp}" -m manual
       - rm -f digital-factory-data.tar.gz
   - cmd [proc]:
       - cd paas_jelastic_backup
       - mysqldump --hex-blob --user=$DB_USER --password=$DB_PASSWORD -h mysqldb --single-transaction --quote-names --opt --databases --compress jahia | gzip > jahia.sql.gz
-      - python3 backrest.py --accesskey "${settings.aws_access_key}" --secretkey "${settings.aws_secret_key}" -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f jahia.sql.gz -t "${settings.timestamp}" -m manual
+      - python3 backrest.py -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f jahia.sql.gz -t "${settings.timestamp}" -m manual
       - rm -f jahia.sql.gz
   - cmd [proc]:
       - cd paas_jelastic_backup
       - tar -czvf digital-factory-config.tar.gz /opt/tomcat/conf/digital-factory-config/
-      - python3 backrest.py --accesskey "${settings.aws_access_key}" --secretkey "${settings.aws_secret_key}" -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz -t "${settings.timestamp}" -m manual
+      - python3 backrest.py -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz -t "${settings.timestamp}" -m manual
       - rm -f digital-factory-config.tar.gz
+  - cmd [proc]:
+      - cd paas_jelastic_backup
+      - python3 backrest.py -a addmeta --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -t "${settings.timestamp}" -m manual
+  - cmd [proc]:
+      - cd paas_jelastic_backup
+      - python3 backrest.py -a rotate --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -t "${settings.timestamp}" -m manual -k ${settings.retention}
 
 settings:
   fields:
@@ -66,3 +72,11 @@ settings:
       caption: timestamp in format %Y-%m-%dT%H:%M:00
       required: true
       type: string
+    - name: retention
+      caption: how many backup do you want to keep
+      type: integer
+      default: 15
+    - name: backtype
+      caption: is this a manual or auto backup
+      type: string
+      default: manual
