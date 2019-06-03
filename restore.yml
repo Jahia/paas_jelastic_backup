@@ -17,48 +17,48 @@ onInstall:
       - echo "aws_secret_access_key = ${settings.aws_secret_key}" >> ~/.aws/credentials
       - echo "region= $(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST)" >> ~/.aws/credentials
       - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git pull; else git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; fi
-    - service tomcat stop
+      - service tomcat stop
   - cmd [proc,cp]:
-    - cd paas_jelastic_backup
-    - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname paas-${settings.env}-${env.uid}-${env.envName} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-data.tar.gz
-    - rm -rf /data
-    - tar xf digital-factory-data.tar.gz -C /
-    - chown tomcat:tomcat -R /data
-    - rm digital-factory-data.tar.gz
+      - cd paas_jelastic_backup
+      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname paas-${settings.env}-${env.uid}-${env.envName} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-data.tar.gz
+      - rm -rf /data
+      - tar xf digital-factory-data.tar.gz -C /
+      - chown tomcat:tomcat -R /data
+      - rm digital-factory-data.tar.gz
   - cmd [proc,cp]:
-    - cd paas_jelastic_backup
-    - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname paas-${settings.env}-${env.uid}-${env.envName} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-config.tar.gz
-    - rm -rf /opt/tomcat/conf/conf/digital-factory-config
-    - tar xf digital-factory-config.tar.gz -C /opt/tomcat/conf
-    - chown tomcat:tomcat -R /opt/tomcat/conf
-    - rm -f digital-factory-config.tar.gz
-    - rm -f /data/digital-factory-data/repository/.lock
-    - touch /data/digital-factory-data/safe-env-clone
-    - chown tomcat:tomcat /data/digital-factory-data/safe-env-clone
-    - sed -i "s|^cluster.node.serverId.*|cluster.node.serverId = $HOSTNAME|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
+      - cd paas_jelastic_backup
+      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname paas-${settings.env}-${env.uid}-${env.envName} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-config.tar.gz
+      - rm -rf /opt/tomcat/conf/conf/digital-factory-config
+      - tar xf digital-factory-config.tar.gz -C /opt/tomcat/conf
+      - chown tomcat:tomcat -R /opt/tomcat/conf
+      - rm -f digital-factory-config.tar.gz
+      - rm -f /data/digital-factory-data/repository/.lock
+      - touch /data/digital-factory-data/safe-env-clone
+      - chown tomcat:tomcat /data/digital-factory-data/safe-env-clone
+      - sed -i "s|^cluster.node.serverId.*|cluster.node.serverId = $HOSTNAME|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
   - cmd [cp]:
-    - sed -i "s|^processingServer.*|processingServer = false|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
+      - sed -i "s|^processingServer.*|processingServer = false|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
   - cmd [proc]:
-    - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname paas-${settings.env}-${env.uid}-${env.envName} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz
-    - gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h mysqldb
-    - rm -f jahia.sql.gz
+      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname paas-${settings.env}-${env.uid}-${env.envName} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz
+      - gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h mysqldb
+      - rm -f jahia.sql.gz
   - cmd [proc,cp]:
-    - service tomcat start
-    
+      - service tomcat start
+
 settings:
-  fields: 
-  - name: backup_name
-    type: string
-    caption: Backup Name
-    vtype: text
-    required: true
-  - name: aws_access_key
-    type: string
-    caption: AWS Access Key
-    vtype: text
-    required: true
-  - name: aws_secret_key
-    type: string
-    caption: AWS Secret Key
-    vtype: text
-    required: true
+  fields:
+    - name: backup_name
+      type: string
+      caption: Backup Name
+      vtype: text
+      required: true
+    - name: aws_access_key
+      type: string
+      caption: AWS Access Key
+      vtype: text
+      required: true
+    - name: aws_secret_key
+      type: string
+      caption: AWS Secret Key
+      vtype: text
+      required: true
