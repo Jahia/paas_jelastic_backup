@@ -13,6 +13,7 @@ onInstall:
       - pip3 install boto3
       - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git pull; else git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; fi
   - cmd [proc]:
+      - cd paas_jelastic_backup
       - tar -czvf digital-factory-data.tar.gz /data/digital-factory-data/
       - python3 backrest.py --accesskey ${settings.aws_access_key} --secretkey ${settings.aws_secret_key} -a upload --bucket_name paas_${settings.env}_${env.uid}_${env.envName} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz -t ${settings.timestamp} -m manual
       - rm -f digital-factory-data.tar.gz
