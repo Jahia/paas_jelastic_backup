@@ -39,6 +39,7 @@ onInstall:
   - cmd [cp]:
       - sed -i "s|^processingServer.*|processingServer = false|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
   - cmd [proc]:
+      - cd paas_jelastic_backup
       - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname paas-${settings.env}-${env.uid}-${env.envName} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz
       - gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h mysqldb
       - rm -f jahia.sql.gz
