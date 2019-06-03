@@ -62,3 +62,25 @@ settings:
       caption: AWS Secret Key
       vtype: text
       required: true
+    - name: gitrepo
+      caption: backrest git repo url
+      type: string
+      default: https://github.com/Jahia/paas_jelastic_backup.git
+      inputType: hidden
+    - name: gitbranch
+      caption: git repo branch to use
+      default: wip_backrest
+      type: string
+      inputType: hidden
+    - name: env
+      type: string
+      required: true
+      default: prod
+    - name: timestamp
+      caption: timestamp in format %Y-%m-%dT%H:%M:00
+      required: true
+      type: string
+    - name: backtype
+      caption: is this a manual or auto backup
+      type: string
+      default: manual
