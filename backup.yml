@@ -76,7 +76,7 @@ settings:
       type: string
     - name: retention
       caption: how many backup do you want to keep
-      type: integer
+      type: string
       default: 15
     - name: backtype
       caption: is this a manual or auto backup
