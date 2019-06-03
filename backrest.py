@@ -186,14 +186,12 @@ if __name__ == '__main__':
         exit(1)
 
 
-
     object_name = "{}_{}_{}/{}".format(args.backupname, args.timestamp,
                                        args.mode, args.file)
     # cloudprovider = args.cloudprovider
 
     dx_version = os.environ['DX_VERSION']
     dx_product = os.environ['_PROVIDE']
-
 
 
     if cloudprovider == 'aws':
@@ -215,7 +213,7 @@ if __name__ == '__main__':
     elif args.action == 'addmeta':
         print(add_to_metadata_file(args.bucketname, args.backupname,
                                    args.timestamp, args.mode,
-                                   'DX', '7.3.1.0'))
+                                   dx_product, dx_version))
     elif args.action == 'delmeta':
         print(remove_from_metadata_file(args.bucketname, args.backupname,
                                         args.timestamp))
