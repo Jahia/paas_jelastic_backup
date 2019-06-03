@@ -47,7 +47,7 @@ def argparser():
 
 
 def download(bucket, object_name, filename):
-    cp = JC.PlayWithIt()
+    cp = JC.PlayWithIt(region_name=region)
     if cp.download_file(bucket, filename, object_name):
         logging.info(r"well done \o/")
         return True
@@ -57,7 +57,7 @@ def download(bucket, object_name, filename):
 
 
 def upload(filename, bucket, object_name):
-    cp = JC.PlayWithIt()
+    cp = JC.PlayWithIt(region_name=region)
     if cp.upload_file(filename, bucket, object_name):
         logging.info("{} is now uploaded as {}:{}"
                      .format(filename, bucket, object_name))
@@ -69,7 +69,7 @@ def upload(filename, bucket, object_name):
 
 
 def retention(bucket, backupname, to_keep):
-    cp = JC.PlayWithIt()
+    cp = JC.PlayWithIt(region_name=region)
     folders = cp.folder_list(bucket)
     if to_keep < len(folders):
         logging.info("You ask for {} backup retention but found {}"
@@ -97,7 +97,7 @@ def retention(bucket, backupname, to_keep):
 def list_backup(bucket, backupname):
     metadatakey = "metadata"
     tmpfile = "/tmp/backrest_metadata.tmp"
-    cp = JC.PlayWithIt()
+    cp = JC.PlayWithIt(region_name=region)
     if cp.download_file(bucket, tmpfile, metadatakey):
         logging.info("The metadata file have been downloaded from {}"
                      .format(bucket))
@@ -113,7 +113,7 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
                          dx_product, dx_version):
     metadatakey = "metadata"
     tmpfile = "/tmp/backrest_metadata.tmp"
-    cp = JC.PlayWithIt()
+    cp = JC.PlayWithIt(region_name=region)
     folder = "{}_{}_{}".format(backupname, timestamp, mode)
     if cp.download_file(bucket, tmpfile, metadatakey):
         logging.info("A existing metadata file have been downloaded from {}"
@@ -146,7 +146,7 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
 def remove_from_metadata_file(bucket, backupname, timestamp):
     metadatakey = "metadata"
     tmpfile = "/tmp/backrest_metadata.tmp"
-    cp = JC.PlayWithIt()
+    cp = JC.PlayWithIt(region_name=region)
     if cp.download_file(bucket, tmpfile, metadatakey):
         logging.info("A existing metadata file have been downloaded from {}"
                      .format(bucket))
