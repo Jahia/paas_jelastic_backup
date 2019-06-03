@@ -19,7 +19,8 @@ def argparser():
                         help="do you want to do ?",
                         choices=['upload', 'download',
                                  'list',
-                                 'addmeta', 'delmeta'],
+                                 'addmeta', 'delmeta',
+                                 'rotate'],
                         required=True)
     parser.add_argument("--bucketname",
                         help="the bucket name you want to play with",
@@ -29,7 +30,7 @@ def argparser():
                         required=True)
     parser.add_argument("-f", "--file",
                         help="the file you want to download or upload",
-                        required=True)
+                        required=False)
     parser.add_argument("-k", "--keep",
                         help="how many backup do you want to keep",
                         type=int)
@@ -220,3 +221,5 @@ if __name__ == '__main__':
                                         args.timestamp))
     elif args.action == 'list':
         print(list_backup(args.bucketname, args.backupname))
+    elif args.action == 'rotate':
+        retention(args.bucketname, args.backupname, args.keep)
