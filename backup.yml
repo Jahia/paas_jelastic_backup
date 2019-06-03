@@ -3,7 +3,7 @@ type: update
 version: 1.5
 name: Jahia - Snapshots an environment and stores it in a S3 bucket
 logo: /images/jahia-logo-70x70.png
-id: jahia-backup-to-s3
+id: jahia-backup-to-bucket
 baseUrl: https://raw.githubusercontent.com/Jahia/paas_jelastic_backup/wip_backrest
 
 
@@ -20,24 +20,24 @@ onInstall:
   - cmd [proc]:
       - cd paas_jelastic_backup
       - tar -czvf digital-factory-data.tar.gz /data/digital-factory-data/
-      - python3 backrest.py -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz -t "${settings.timestamp}" -m manual
+      - python3 backrest.py -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz -t "${settings.timestamp}" -m ${settings.backtype}
       - rm -f digital-factory-data.tar.gz
   - cmd [proc]:
       - cd paas_jelastic_backup
       - mysqldump --hex-blob --user=$DB_USER --password=$DB_PASSWORD -h mysqldb --single-transaction --quote-names --opt --databases --compress jahia | gzip > jahia.sql.gz
-      - python3 backrest.py -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f jahia.sql.gz -t "${settings.timestamp}" -m manual
+      - python3 backrest.py -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f jahia.sql.gz -t "${settings.timestamp}" -m ${settings.backtype}
       - rm -f jahia.sql.gz
   - cmd [proc]:
       - cd paas_jelastic_backup
       - tar -czvf digital-factory-config.tar.gz /opt/tomcat/conf/digital-factory-config/
-      - python3 backrest.py -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz -t "${settings.timestamp}" -m manual
+      - python3 backrest.py -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz -t "${settings.timestamp}" -m ${settings.backtype}
       - rm -f digital-factory-config.tar.gz
   - cmd [proc]:
       - cd paas_jelastic_backup
-      - python3 backrest.py -a addmeta --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -t "${settings.timestamp}" -m manual
+      - python3 backrest.py -a addmeta --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -t "${settings.timestamp}" -m ${settings.backtype}
   - cmd [proc]:
       - cd paas_jelastic_backup
-      - python3 backrest.py -a rotate --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -t "${settings.timestamp}" -m manual -k ${settings.retention}
+      - python3 backrest.py -a rotate --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -t "${settings.timestamp}" -m ${settings.backtype} -k ${settings.retention}
 
 settings:
   fields:
