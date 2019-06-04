@@ -47,7 +47,7 @@ class PlayWithIt():
         self.tags = [{'Key': 'product', 'Value': 'cloud-pass'},
                      {'Key': 'envname', 'Value': self.envname},
                      {'Key': 'env', 'Value': self.env}]
-
+        self.awsid = boto3.client('sts').get_caller_identity().get('Account')
         self.iampolicy = """{{"Version": "2012-10-17",
                               "Statement": [
                                   {{"Effect": "Allow",
@@ -295,7 +295,7 @@ class PlayWithIt():
         try:
             user = iam.create_user(UserName=username)
             accesskeypair = user.create_access_key_pair()
-            iam.create_policy(PolicyName="backrest.py",
+            iam.create_policy(PolicyName="paas_{}_backup".format(username),
                               PolicyDocument=json.dumps(iampolicy),
                               Description="Created by backrest.py")
             logging.info("IAM user {} is now created".format(username))
@@ -316,6 +316,7 @@ class PlayWithIt():
             logging.warning("Trying to delete IAM user {} which do not exist"
                             .format(username))
             return False
+        policyname = "paas_{}_backup".format(username)
         iam = boto3.client('iam')
         try:
             for r in iam.list_access_keys(UserName=username)['AccessKeyMetadata']:
@@ -324,6 +325,8 @@ class PlayWithIt():
                     logging.info("AccessKey {} for IAM user {} is now removed"
                                  .format(r['AccessKeyId'],
                                          username))
+            iam.delete_policy(PolicyArn="arn:aws:iam::{}:policy/{}"
+                              .format(self.awsid, policyname))
             secretid = "paas_{}_{}_{}".format(self.env, self.accountID,
                                               self.envname)
             self.delete_secret(secretid + "_ARN")
