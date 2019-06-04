@@ -291,13 +291,13 @@ class PlayWithIt():
                             .format(username))
             return False
         iampolicy = json.loads(self.iampolicy.format(bucketname=bucketname))
+        policyname = "paas_{}_backup".format(username)
         iam = boto3.resource('iam')
         try:
             user = iam.create_user(UserName=username)
             accesskeypair = user.create_access_key_pair()
-            iam.create_policy(PolicyName="paas_{}_backup".format(username),
-                              PolicyDocument=json.dumps(iampolicy),
-                              Description="Created by backrest.py")
+            user_policy = iam.UserPolicy(username, policyname)
+            user_policy.put(PolicyDocument=json.dumps(iampolicy))
             logging.info("IAM user {} is now created".format(username))
         except ClientError as e:
             logging.error("A problem occur when created IAM user {}"
@@ -316,8 +316,9 @@ class PlayWithIt():
             logging.warning("Trying to delete IAM user {} which do not exist"
                             .format(username))
             return False
-        policyname = "paas_{}_backup".format(username)
         iam = boto3.client('iam')
+        iamr = boto3.resource('iam')
+        policyname = "paas_{}_backup".format(username)
         try:
             for r in iam.list_access_keys(UserName=username)['AccessKeyMetadata']:
                 if iam.delete_access_key(UserName=username,
@@ -325,13 +326,13 @@ class PlayWithIt():
                     logging.info("AccessKey {} for IAM user {} is now removed"
                                  .format(r['AccessKeyId'],
                                          username))
-            iam.delete_policy(PolicyArn="arn:aws:iam::{}:policy/{}"
-                              .format(self.awsid, policyname))
             secretid = "paas_{}_{}_{}".format(self.env, self.accountID,
                                               self.envname)
             self.delete_secret(secretid + "_ARN")
             self.delete_secret(secretid + "_AccessKey")
             self.delete_secret(secretid + "_SecretKey")
+            user_policy = iamr.UserPolicy(username, policyname)
+            user_policy.delete()
             iam.delete_user(UserName=username)
             logging.info("IAM user {} is now deleted".format(username))
         except ClientError as e:
