@@ -35,18 +35,31 @@ class ProgressPercentage(object):
 
 class PlayWithIt():
     def __init__(self, envname='testenv', accountID='testID',
-                 region_name='eu-west-1', env='prod'):
+                 region_name='eu-west-1', env='prod',
+                 accesskey=None, secretkey=None):
         self.region_name = region_name
         self.envname = envname
         self.accountID = accountID
         self.env = env
+        self.accesskey = accesskey
+        self.secretkey = secretkey
         self.tags = [{'Key': 'product', 'Value': 'cloud-pass'},
                      {'Key': 'envname', 'Value': self.envname},
                      {'Key': 'env', 'Value': self.env}]
 
+    # TOOLS FUNCTIONS #########################################################
+    def return_resource_session(self, resourcename):
+        if self.accesskey is None and self.secretkey is None:
+            session = boto3.resource(resourcename)
+        else:
+            session = boto3.Session(aws_access_key_id = self.accesskey,
+                                    aws_secret_access_key = self.secretkey)
+            session = session.resource(resourcename)
+        return session
+
     # BUCKET METHODES #########################################################
     def test_if_bucket_exist(self, name):
-        s3 = boto3.resource('s3')
+        s3 = self.return_resource_session('s3')
         bucket = s3.Bucket(name)
 
         if bucket.creation_date:
@@ -61,7 +74,7 @@ class PlayWithIt():
             logging.warning("You try to create Bucket {} which already exist"
                             .format(name))
             return False
-        s3 = boto3.resource('s3')
+        s3 = self.return_resource_session('s3')
         try:
             s3.create_bucket(Bucket=name,
                              CreateBucketConfiguration={
@@ -80,7 +93,7 @@ class PlayWithIt():
             logging.warning("You try to delete Bucket {} which do not exist"
                             .format(name))
             return False
-        s3 = boto3.resource('s3')
+        s3 = self.return_resource_session('s3')
         bucket = s3.Bucket(name)
         try:
             # all keys inside a bucket must be deleted before the bucket itself
@@ -99,7 +112,7 @@ class PlayWithIt():
             logging.warning("You try to delete {} in {} which do not exist"
                             .format(folder, bucket))
             return False
-        s3 = boto3.resource('s3')
+        s3 = self.return_resource_session('s3')
         b = s3.Bucket(bucket)
         try:
             for obj in b.objects.filter(Prefix=folder):
@@ -148,7 +161,7 @@ class PlayWithIt():
             logging.warning("You try to test if key {} exist in {} which do not exist"
                             .format(key, bucket))
             return False
-        s3 = boto3.resource('s3')
+        s3 = self.return_resource_session('s3')
         try:
             s3.Object(bucket, key).load()
         except ClientError as e:
@@ -311,10 +324,10 @@ class PlayWithIt():
 
     # SECRETS METHODES ########################################################
     def get_secret(self, secretid):
-        if not self.test_if_secret_exist(secretid):
-            logging.warning('You try to get secret {} which do not exist'
-                            .format(secretid))
-            return False
+        # if not self.test_if_secret_exist(secretid):
+        #     logging.warning('You try to get secret {} which do not exist'
+        #                     .format(secretid))
+        #     return False
         sm = boto3.client('secretsmanager', region_name=self.region_name)
         try:
             r = sm.get_secret_value(SecretId=secretid)
