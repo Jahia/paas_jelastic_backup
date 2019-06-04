@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-import boto3
-from botocore.exceptions import ClientError
+import json
 import logging
 import os
 import threading
 import sys
 import re
+import boto3
+from botocore.exceptions import ClientError
 
 LOG_FORMAT = "%(asctime)s %(levelname)s: [%(funcName)s] %(message)s"
 logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
@@ -46,6 +47,35 @@ class PlayWithIt():
         self.tags = [{'Key': 'product', 'Value': 'cloud-pass'},
                      {'Key': 'envname', 'Value': self.envname},
                      {'Key': 'env', 'Value': self.env}]
+
+        self.iampolicy = """{{"Version": "2012-10-17",
+                              "Statement": [
+                                  {{"Effect": "Allow",
+                                   "Action": [
+                                       "s3:DeleteObjectTagging",
+                                       "s3:ListBucketByTags",
+                                       "s3:ListBucketMultipartUploads",
+                                       "s3:GetBucketTagging",
+                                       "s3:ReplicateTags",
+                                       "s3:PutObjectVersionTagging",
+                                       "s3:CreateBucket",
+                                       "s3:ListBucket",
+                                       "s3:DeleteObjectVersionTagging",
+                                       "s3:PutEncryptionConfiguration",
+                                       "s3:PutObject",
+                                       "s3:GetObject",
+                                       "s3:PutBucketTagging",
+                                       "s3:PutObjectTagging",
+                                       "s3:DeleteObject",
+                                       "s3:DeleteBucket"
+                                   ],
+                                   "Resource": [
+                                       "arn:aws:s3:::{bucketname}/*",
+                                       "arn:aws:s3:::{bucketname}"
+                                   ]
+                                   }}
+                              ]
+                              }}"""
 
     # TOOLS FUNCTIONS #########################################################
     def return_resource_session(self, resourcename):
@@ -255,15 +285,19 @@ class PlayWithIt():
 
 
     # IAM METHODES ############################################################
-    def create_iam_user(self, username):
+    def create_iam_user(self, username, bucketname = None):
         if self.test_if_iamuser_exist(username):
             logging.warning("Trying to create IAM user {} which already exist"
                             .format(username))
             return False
+        iampolicy = json.loads(self.iampolicy.format(bucketname=bucketname))
         iam = boto3.resource('iam')
         try:
             user = iam.create_user(UserName=username)
             accesskeypair = user.create_access_key_pair()
+            iam.create_policy(PolicyName="backrest.py",
+                              PolicyDocument=json.dumps(iampolicy),
+                              Description="Created by backrest.py")
             logging.info("IAM user {} is now created".format(username))
         except ClientError as e:
             logging.error("A problem occur when created IAM user {}"
@@ -272,6 +306,7 @@ class PlayWithIt():
             return False
         secretid = "paas_{}_{}_{}".format(self.env, self.accountID,
                                           self.envname)
+        self.create_secret(secretid + "_ARN", user.arn)
         self.create_secret(secretid + "_AccessKey", accesskeypair.id)
         self.create_secret(secretid + "_SecretKey", accesskeypair.secret)
         return True
@@ -291,6 +326,7 @@ class PlayWithIt():
                                          username))
             secretid = "paas_{}_{}_{}".format(self.env, self.accountID,
                                               self.envname)
+            self.delete_secret(secretid + "_ARN")
             self.delete_secret(secretid + "_AccessKey")
             self.delete_secret(secretid + "_SecretKey")
             iam.delete_user(UserName=username)
