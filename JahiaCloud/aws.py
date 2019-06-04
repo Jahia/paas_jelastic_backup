@@ -73,7 +73,12 @@ class PlayWithIt():
                                        "arn:aws:s3:::{bucketname}/*",
                                        "arn:aws:s3:::{bucketname}"
                                    ]
-                                   }}
+                                    }},
+                                    {{
+                                        "Effect": "Allow",
+                                        "Action": "s3:ListAllMyBuckets",
+                                        "Resource": "*"
+                                    }}
                               ]
                               }}"""
 
