@@ -190,8 +190,11 @@ if __name__ == '__main__':
                                        args.mode, args.file)
     # cloudprovider = args.cloudprovider
 
-    dx_version = os.environ['DX_VERSION']
-    dx_product = os.environ['_PROVIDE']
+    try:
+        dx_version = os.environ['DX_VERSION']
+        dx_product = os.environ['_PROVIDE']
+    except:
+        pass
 
 
     if cloudprovider == 'aws':
