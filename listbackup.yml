@@ -23,11 +23,6 @@ onInstall:
 
 settings:
   fields:
-    - name: backup_name
-      type: string
-      caption: Backup Name
-      vtype: text
-      required: true
     - name: aws_access_key
       type: string
       caption: AWS Access Key
@@ -52,15 +47,3 @@ settings:
       type: string
       required: true
       default: prod
-    - name: timestamp
-      caption: timestamp in format %Y-%m-%dT%H:%M:00
-      required: true
-      type: string
-    - name: retention
-      caption: how many backup do you want to keep
-      type: string
-      default: 15
-    - name: backtype
-      caption: is this a manual or auto backup
-      type: string
-      default: manual

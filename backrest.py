@@ -24,10 +24,10 @@ def argparser():
                         required=True)
     parser.add_argument("--bucketname",
                         help="the bucket name you want to play with",
-                        required=True)
+                        required=False)
     parser.add_argument("--backupname",
                         help="the backup name you want to play with",
-                        required=True)
+                        required=False)
     parser.add_argument("-f", "--file",
                         help="the file you want to download or upload",
                         required=False)
