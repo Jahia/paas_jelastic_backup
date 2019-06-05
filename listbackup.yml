@@ -19,7 +19,7 @@ onInstall:
       - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git pull; else git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; fi
   - cmd [proc]:
       - cd paas_jelastic_backup
-      - python3 backrest.py -a list --bucketname paas-${settings.env}-${env.uid}-${env.envName} -t "${settings.timestamp}" -m ${settings.backtype} -k ${settings.retention}
+      - python3 backrest.py -a list --bucketname paas-${settings.env}-${env.uid}-${env.envName}
 
 settings:
   fields:
