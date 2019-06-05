@@ -43,7 +43,3 @@ settings:
       default: wip_backrest
       type: string
       inputType: hidden
-    - name: env
-      type: string
-      required: true
-      default: prod
