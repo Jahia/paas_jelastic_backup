@@ -263,7 +263,7 @@ class PlayWithIt():
         try:
             r = s3.list_objects_v2(Bucket=bucket, Delimiter="/")
             f = []
-            for e in r['CommonPrefixes'][1:]:  # because of "/" object itself
+            for e in r['CommonPrefixes']:
                 f.append(e['Prefix'])
             f.sort()
             c = len(f)
