@@ -92,6 +92,14 @@ class PlayWithIt():
             session = session.resource(resourcename)
         return session
 
+    def return_client_session(self, resourcename):
+        if self.accesskey is None and self.secretkey is None:
+            session = boto3.client(resourcename)
+        else:
+            session = boto3.Session(aws_access_key_id = self.accesskey,
+                                    aws_secret_access_key = self.secretkey)
+            session = session.client(resourcename)
+        return session
     # BUCKET METHODES #########################################################
     def test_if_bucket_exist(self, name):
         s3 = self.return_resource_session('s3')
@@ -177,7 +185,8 @@ class PlayWithIt():
             object_name = file_name
 
         # Upload the file
-        s3_client = boto3.client('s3')
+        s3_client = self.return_client_session('s3')
+        # s3_client = s3.client('s3')
         try:
             s3_client.upload_file(file_name, bucket, object_name,
                                   Callback=ProgressPercentage(file_name))
@@ -222,7 +231,8 @@ class PlayWithIt():
             object_name = file_name
 
         # Download the file
-        s3_client = boto3.client('s3')
+        s3_client = self.return_client_session('s3')
+        # s3_client = s3.client('s3')
         try:
             size = s3_client.head_object(Bucket=bucket,
                                          Key=object_name)
