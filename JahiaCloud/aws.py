@@ -251,7 +251,8 @@ class PlayWithIt():
         return True
 
     def folder_list(self, bucket):
-        s3 = boto3.client('s3')
+        s3 = self.return_client_session('s3')
+        # s3 = boto3.client('s3')
         if not self.test_if_bucket_exist(bucket):
             logging.warning("You can't list folders from {} if it not exist"
                             .format(bucket))
@@ -278,7 +279,8 @@ class PlayWithIt():
                             .format(bucket))
             return False
         size = 0
-        s3 = boto3.client('s3')
+        s3 = self.return_client_session('s3')
+        # s3 = boto3.client('s3')
         exclude_pattern = '/(metadata)$'
         try:
             keys = s3.list_objects_v2(Bucket=bucket, Prefix=folder)
