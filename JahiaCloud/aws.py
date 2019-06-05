@@ -189,7 +189,10 @@ class PlayWithIt():
         # s3_client = s3.client('s3')
         try:
             s3_client.upload_file(file_name, bucket, object_name,
-                                  Callback=ProgressPercentage(file_name))
+                                  Callback=ProgressPercentage(file_name),
+                                  ExtraArgs={
+                                      "ServerSideEncryption": "AES256"
+                                  })
             print('')  # just do get a new line
             logging.info("{} have been pushed to {}:{}"
                          .format(file_name, bucket, object_name))
