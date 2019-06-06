@@ -21,9 +21,9 @@ onInstall:
       - cd paas_jelastic_backup
       - python3 backrest.py -a list --bucketname paas-${settings.env}-${env.uid}-${env.envName}
   - setGlobals:
-    output: ${response.out}
+      cmdOutput: ${response.out}
 
-success: ${global.output}
+success: ${globals.cmdOutput}
 
 settings:
   fields:
