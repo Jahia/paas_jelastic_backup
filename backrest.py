@@ -107,7 +107,7 @@ def list_backup(bucket, backupname):
     else:
         logging.info("No metadata file yet, nothing to list")
         listbackups = {"backups": []}
-    return str(listbackups)
+    return str(json.dumps(listbackups))
 
 
 def add_to_metadata_file(bucket, backupname, timestamp, mode,
