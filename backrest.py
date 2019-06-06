@@ -99,7 +99,7 @@ def list_backup(bucket, backupname):
     metadatakey = "metadata"
     tmpfile = "/tmp/backrest_metadata.tmp"
     cp = JC.PlayWithIt(region_name=region)
-    if cp.download_file(bucket, tmpfile, metadatakey):
+    if cp.download_file(bucket, tmpfile, metadatakey, quiet=True):
         logging.info("The metadata file have been downloaded from {}"
                      .format(bucket))
         with open(tmpfile, 'r') as f:

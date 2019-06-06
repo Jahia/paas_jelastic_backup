@@ -217,7 +217,8 @@ class PlayWithIt():
             return False
         return True
 
-    def download_file(self, bucket, file_name, object_name=None):
+    def download_file(self, bucket, file_name,
+                      object_name=None, quiet=False):
         """download a file to an S3 bucket
         :param file_name: File to download
         :param bucket: Bucket to download to
@@ -240,10 +241,14 @@ class PlayWithIt():
             size = s3_client.head_object(Bucket=bucket,
                                          Key=object_name)
             size = size['ResponseMetadata']['HTTPHeaders']['content-length']
-            s3_client.download_file(bucket, object_name, file_name,
-                                    Callback=ProgressPercentage(file_name,
-                                                                int(size)))
-            print('')  # just do get a new line
+            if not quiet:
+                s3_client.download_file(bucket, object_name, file_name,
+                                        Callback=ProgressPercentage(file_name,
+                                                                    int(size)))
+                print('')  # just do get a new line
+            else:
+                s3_client.download_file(bucket, object_name, file_name)
+
             logging.info("{}:{} have been downloaded to {}"
                          .format(bucket, object_name, file_name))
         except ClientError as e:
