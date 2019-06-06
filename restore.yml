@@ -16,7 +16,7 @@ onInstall:
       - echo "aws_access_key_id= ${settings.aws_access_key}" >> ~/.aws/credentials
       - echo "aws_secret_access_key = ${settings.aws_secret_key}" >> ~/.aws/credentials
       - echo "region= $(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST)" >> ~/.aws/credentials
-      - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git pull; git checkout tags/${settings.gittag}; echo; else git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git checkout tags/${settings.gittag}; echo; fi
+      - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git pull --rebase; git checkout tags/${settings.gittag}; echo; else git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git checkout tags/${settings.gittag}; echo; fi
       - service tomcat stop
   - cmd [proc,cp]:
       - cd paas_jelastic_backup
