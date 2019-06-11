@@ -204,3 +204,19 @@ class PlayWithIt():
             except:
                 logging.error("Something bad happened")
         return size
+    def download_file(self, sto_account, file_name, object_name=None, rg=RG,
+                      sto_cont_name=None, quiet=None):
+        pass
+        sto_key = self.get_sto_account_key(rg, sto_account)
+        blob = BlockBlobService(sto_account, sto_key)
+        try:
+            blob.get_blob_to_path(sto_cont_name, object_name,
+                                       file_name)
+            logging.info("File {} successfully downloaded from {}:{}"
+                         .format(file_name, sto_account, sto_cont_name))
+        except:
+            logging.error("Cannot download {}:{}:{}"
+                          .format(sto_account, sto_cont_name, object_name))
+            return False
+        return True
+
