@@ -199,6 +199,8 @@ if __name__ == '__main__':
 
     if cloudprovider == 'aws':
         import JahiaCloud.aws as JC
+    elif cloudprovider== 'azure':
+        import JahiaCloud.Azure as JC
 
     logging.info("You want to work with {} as cloud provider. Let's go"
                  .format(cloudprovider))
