@@ -68,7 +68,7 @@ settings:
       inputType: hidden
     - name: gittag
       caption: git tag branch to use
-      default: v0.2
+      default: v0.3
       type: string
       inputType: hidden
     - name: env
