@@ -281,7 +281,7 @@ class PlayWithIt():
             return False
         return f
 
-    def folder_size(self, bucket, folder, **kwargs):
+    def folder_size(self, folder, bucket=None, **kwargs):
         if not self.test_if_bucket_exist(bucket):
             logging.warning("You can't get this folder size if {} do not exist"
                             .format(bucket))
