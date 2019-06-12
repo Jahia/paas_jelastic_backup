@@ -150,7 +150,7 @@ class PlayWithIt():
             return False
         return True
 
-    def delete_folder(self, bucket, folder):
+    def delete_folder(self, folder, bucket=None, **kwargs):
         if not self.test_if_bucket_exist(bucket):
             logging.warning("You try to delete {} in {} which do not exist"
                             .format(folder, bucket))
@@ -281,7 +281,7 @@ class PlayWithIt():
             return False
         return f
 
-    def folder_size(self, bucket, folder):
+    def folder_size(self, bucket, folder, **kwargs):
         if not self.test_if_bucket_exist(bucket):
             logging.warning("You can't get this folder size if {} do not exist"
                             .format(bucket))

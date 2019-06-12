@@ -70,7 +70,7 @@ def upload(filename, bucket, object_name, **kwargs):
 
 
 def retention(bucket, backupname, to_keep, **kwargs):
-    folders = cp.folder_list(bucket)
+    folders = cp.folder_list(bucket=bucket)
     if to_keep < len(folders):
         logging.info("You ask for {} backup retention but found {}"
                      .format(to_keep, len(folders)))
@@ -83,7 +83,7 @@ def retention(bucket, backupname, to_keep, **kwargs):
             logging.info("Removing {} ({} from metadata file)"
                          .format(backupname, timestamp))
             remove_from_metadata_file(bucket, backupname, timestamp)
-            if cp.delete_folder(bucket, f):
+            if cp.delete_folder(f, bucket=bucket):
                 logging.info("{}:{} and his content is now deleted"
                              .format(bucket, f))
             else:
@@ -127,7 +127,7 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
     d = {"name": backupname,
          "timestamp": timestamp,
          "mode": mode,
-         "size": cp.folder_size(bucket, folder),
+         "size": cp.folder_size(folder, bucket=bucket),
          "product": dx_product,
          "version": dx_version
          }
@@ -137,7 +137,7 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
     with open(tmpfile, 'w+') as tmp:
         tmp.write(json.dumps(listbackups, indent=2, sort_keys=True))
 
-    if cp.upload_file(tmpfile, bucket, metadatakey):
+    if cp.upload_file(tmpfile, bucket=bucket, object_name=metadatakey):
         return True
     else:
         return False
@@ -209,7 +209,6 @@ if __name__ == '__main__':
         print("blablabla {}".format(args.file))
 
     if args.action == 'upload':
-
         upload(args.file, args.bucketname, object_name)
         if args.keep:
             retention(args.bucketname, args.backupname, args.keep)

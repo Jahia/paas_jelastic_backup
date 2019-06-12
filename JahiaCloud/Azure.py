@@ -161,7 +161,7 @@ class PlayWithIt():
             return False
         return True
 
-    def delete_folder(self, folder):
+    def delete_folder(self, folder, **kwargs):
         sto_key = self.get_sto_account_key()
         blob = BlockBlobService(self.sto_account, sto_key)
         folders = [b for b in blob.list_blobs(self.sto_cont_name)
@@ -180,7 +180,7 @@ class PlayWithIt():
                 return False
         return True
 
-    def folder_size(self, folder):
+    def folder_size(self, folder, **kwargs):
         sto_key = self.get_sto_account_key()
         blob = BlockBlobService(self.sto_account, sto_key)
         objects = [b for b in blob.list_blobs(self.sto_cont_name)
@@ -193,6 +193,18 @@ class PlayWithIt():
             except:
                 logging.error("Something bad happened")
         return size
+
+    def folder_list(self, **kwargs):
+        sto_key = self.get_sto_account_key()
+        blob = BlockBlobService(self.sto_account, sto_key)
+        fl = []
+        for obj in blob.list_blob_names(self.sto_cont_name):
+            if obj.split('/')[0] == 'metadata':
+                continue
+            fl.append(obj.split('/')[0])
+        fl.sort
+        return fl
+
     def download_file(self, file_name, object_name=None,
                       quiet=None, **kwargs):
         sto_key = self.get_sto_account_key()
