@@ -5,9 +5,11 @@ import os
 import json
 import re
 
+
 LOG_FORMAT = "%(asctime)s %(levelname)s: [%(funcName)s] %(message)s"
 logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
 
+AZ_RG = "paas_backup"
 
 def argparser():
     parser = argparse.ArgumentParser()
@@ -47,9 +49,8 @@ def argparser():
     return parser.parse_args()
 
 
-def download(bucket, object_name, filename):
-    cp = JC.PlayWithIt(region_name=region)
-    if cp.download_file(bucket, filename, object_name):
+def download(bucket, object_name, filename, **kwargs):
+    if cp.download_file(filename, object_name=object_name, bucket=bucket):
         logging.info(r"well done \o/")
         return True
     else:
@@ -57,9 +58,8 @@ def download(bucket, object_name, filename):
         return False
 
 
-def upload(filename, bucket, object_name):
-    cp = JC.PlayWithIt(region_name=region)
-    if cp.upload_file(filename, bucket, object_name):
+def upload(filename, bucket, object_name, **kwargs):
+    if cp.upload_file(filename, bucket=bucket, object_name=object_name):
         logging.info("{} is now uploaded as {}:{}"
                      .format(filename, bucket, object_name))
         return True
@@ -69,8 +69,7 @@ def upload(filename, bucket, object_name):
         return False
 
 
-def retention(bucket, backupname, to_keep):
-    cp = JC.PlayWithIt(region_name=region)
+def retention(bucket, backupname, to_keep, **kwargs):
     folders = cp.folder_list(bucket)
     if to_keep < len(folders):
         logging.info("You ask for {} backup retention but found {}"
@@ -95,11 +94,11 @@ def retention(bucket, backupname, to_keep):
                      .format(to_keep, len(folders)))
 
 
-def list_backup(bucket, backupname):
+def list_backup(bucket, backupname, **kwargs):
     metadatakey = "metadata"
     tmpfile = "/tmp/backrest_metadata.tmp"
-    cp = JC.PlayWithIt(region_name=region)
-    if cp.download_file(bucket, tmpfile, metadatakey, quiet=True):
+    if cp.download_file(tmpfile, object_name=metadatakey,
+                        bucket=bucket, quiet=True):
         logging.info("The metadata file have been downloaded from {}"
                      .format(bucket))
         with open(tmpfile, 'r') as f:
@@ -111,12 +110,11 @@ def list_backup(bucket, backupname):
 
 
 def add_to_metadata_file(bucket, backupname, timestamp, mode,
-                         dx_product, dx_version):
+                         dx_product, dx_version, **kwargs):
     metadatakey = "metadata"
     tmpfile = "/tmp/backrest_metadata.tmp"
-    cp = JC.PlayWithIt(region_name=region)
     folder = "{}_{}_{}".format(backupname, timestamp, mode)
-    if cp.download_file(bucket, tmpfile, metadatakey):
+    if cp.download_file(tmpfile, object_name=metadatakey, bucket=bucket):
         logging.info("A existing metadata file have been downloaded from {}"
                      .format(bucket))
         with open(tmpfile, 'r') as f:
@@ -144,11 +142,10 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
     else:
         return False
 
-def remove_from_metadata_file(bucket, backupname, timestamp):
+def remove_from_metadata_file(bucket, backupname, timestamp, **kwargs):
     metadatakey = "metadata"
     tmpfile = "/tmp/backrest_metadata.tmp"
-    cp = JC.PlayWithIt(region_name=region)
-    if cp.download_file(bucket, tmpfile, metadatakey):
+    if cp.download_file(tmpfile, object_name=metadatakey, bucket=bucket):
         logging.info("A existing metadata file have been downloaded from {}"
                      .format(bucket))
         with open(tmpfile, 'r') as f:
@@ -165,7 +162,7 @@ def remove_from_metadata_file(bucket, backupname, timestamp):
     with open(tmpfile, 'w+') as tmp:
         tmp.write(json.dumps(listbackups, indent=2, sort_keys=True))
 
-    if cp.upload_file(tmpfile, bucket, metadatakey):
+    if cp.upload_file(tmpfile, bucket=bucket, object_name=metadatakey):
         return True
     else:
         return False
@@ -199,8 +196,11 @@ if __name__ == '__main__':
 
     if cloudprovider == 'aws':
         import JahiaCloud.aws as JC
+        cp = JC.PlayWithIt(region_name=region)
     elif cloudprovider== 'azure':
         import JahiaCloud.Azure as JC
+        cp = JC.PlayWithIt(region_name=region, sto_cont_name=args.backupname,
+                           rg=AZ_RG, sto_account=args.backupname)
 
     logging.info("You want to work with {} as cloud provider. Let's go"
                  .format(cloudprovider))
