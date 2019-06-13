@@ -3,6 +3,7 @@
 import logging
 import adal
 from azure.common.client_factory import get_client_from_cli_profile
+from azure.common.client_factory import get_client_from_auth_file
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.storage import StorageManagementClient
@@ -39,12 +40,21 @@ class PlayWithIt():
         self.sto_cont_name = kwargs['sto_cont_name']
         self.sto_account = kwargs['sto_account']
         self.rg = kwargs['rg']
+        self.authpath = kwargs['authpath']
         self.tags = []
 
-    def return_session(self, classname, method="client"):
-        if method == "client":
-            session = get_client_from_cli_profile(classname)
-            return session
+    def return_session(self, classname, method="authfile"):
+        try:
+            if method == "client":
+                session = get_client_from_cli_profile(classname)
+            elif method == "authfile":
+                session = get_client_from_auth_file(classname,
+                                                    auth_path=self.authpath)
+        except:
+            logging.error("Cannot get a session (class: {}, method: {})"
+                          .format(classname, method))
+            return False
+        return session
 
     def get_sto_account_key(self):
         client = self.return_session(StorageManagementClient)

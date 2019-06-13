@@ -10,6 +10,7 @@ LOG_FORMAT = "%(asctime)s %(levelname)s: [%(funcName)s] %(message)s"
 logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
 
 AZ_RG = "paas_backup"
+AZ_CRED = "{}/.azure/cred.json".format(os.environ['HOME'])
 
 def argparser():
     parser = argparse.ArgumentParser()
@@ -200,7 +201,8 @@ if __name__ == '__main__':
     elif cloudprovider== 'azure':
         import JahiaCloud.Azure as JC
         cp = JC.PlayWithIt(region_name=region, sto_cont_name=args.backupname,
-                           rg=AZ_RG, sto_account=args.backupname)
+                           rg=AZ_RG, sto_account=args.backupname,
+                           authpath=AZ_CRED)
 
     logging.info("You want to work with {} as cloud provider. Let's go"
                  .format(cloudprovider))
