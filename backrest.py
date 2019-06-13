@@ -10,7 +10,8 @@ LOG_FORMAT = "%(asctime)s %(levelname)s: [%(funcName)s] %(message)s"
 logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
 
 AZ_RG = "paas_backup"
-AZ_CRED = "{}/.azure/cred.json".format(os.environ['HOME'])
+# AZ_CRED = "{}/.azure/cred.json".format(os.environ['HOME'])
+AZ_CRED = "/tmp/azurecred.json".format(os.environ['HOME'])
 
 def argparser():
     parser = argparse.ArgumentParser()
@@ -194,18 +195,24 @@ if __name__ == '__main__':
     except:
         pass
 
+    logging.info("You want to work with {} as cloud provider. Let's go"
+                 .format(cloudprovider))
 
     if cloudprovider == 'aws':
         import JahiaCloud.aws as JC
         cp = JC.PlayWithIt(region_name=region)
     elif cloudprovider== 'azure':
         import JahiaCloud.Azure as JC
+        import JahiaCloud.aws as AWS
         cp = JC.PlayWithIt(region_name=region, sto_cont_name=args.backupname,
                            rg=AZ_RG, sto_account=args.backupname,
                            authpath=AZ_CRED)
-
-    logging.info("You want to work with {} as cloud provider. Let's go"
-                 .format(cloudprovider))
+        sm = AWS.PlayWithIt(region_name="eu-west-1")
+        logging.info("I need to retreive Azure auth_file from Secret Manager")
+        secret = json.loads(sm.get_secret('paas_azure_auth_file'))['value']
+        secret = json.loads(secret)
+        with open(AZ_CRED, 'w') as f:
+            f.write(json.dumps(secret, indent=4, sort_keys=True))
 
     if args.file:
         print("blablabla {}".format(args.file))
