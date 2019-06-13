@@ -46,7 +46,8 @@ class PlayWithIt():
         self.secretkey = secretkey
         self.tags = [{'Key': 'product', 'Value': 'cloud-pass'},
                      {'Key': 'envname', 'Value': self.envname},
-                     {'Key': 'env', 'Value': self.env}]
+                     {'Key': 'env', 'Value': self.env},
+                     {'Key': 'project', 'Value': 'jahia_cloud_{}'.format(self.env)}]
         self.awsid = boto3.client('sts').get_caller_identity().get('Account')
         self.iampolicy = """{{"Version": "2012-10-17",
                               "Statement": [
