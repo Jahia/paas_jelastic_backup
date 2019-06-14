@@ -5,9 +5,13 @@ import os
 import json
 import re
 
+
 LOG_FORMAT = "%(asctime)s %(levelname)s: [%(funcName)s] %(message)s"
 logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
 
+AZ_RG = "paas_backup"
+# AZ_CRED = "{}/.azure/cred.json".format(os.environ['HOME'])
+AZ_CRED = "/tmp/azurecred.json".format(os.environ['HOME'])
 
 def argparser():
     parser = argparse.ArgumentParser()
@@ -47,9 +51,8 @@ def argparser():
     return parser.parse_args()
 
 
-def download(bucket, object_name, filename):
-    cp = JC.PlayWithIt(region_name=region)
-    if cp.download_file(bucket, filename, object_name):
+def download(bucket, object_name, filename, **kwargs):
+    if cp.download_file(filename, object_name=object_name, bucket=bucket):
         logging.info(r"well done \o/")
         return True
     else:
@@ -57,9 +60,8 @@ def download(bucket, object_name, filename):
         return False
 
 
-def upload(filename, bucket, object_name):
-    cp = JC.PlayWithIt(region_name=region)
-    if cp.upload_file(filename, bucket, object_name):
+def upload(filename, bucket, object_name, **kwargs):
+    if cp.upload_file(filename, bucket=bucket, object_name=object_name):
         logging.info("{} is now uploaded as {}:{}"
                      .format(filename, bucket, object_name))
         return True
@@ -69,9 +71,8 @@ def upload(filename, bucket, object_name):
         return False
 
 
-def retention(bucket, backupname, to_keep):
-    cp = JC.PlayWithIt(region_name=region)
-    folders = cp.folder_list(bucket)
+def retention(bucket, backupname, to_keep, **kwargs):
+    folders = cp.folder_list(bucket=bucket)
     if to_keep < len(folders):
         logging.info("You ask for {} backup retention but found {}"
                      .format(to_keep, len(folders)))
@@ -84,7 +85,7 @@ def retention(bucket, backupname, to_keep):
             logging.info("Removing {} ({} from metadata file)"
                          .format(backupname, timestamp))
             remove_from_metadata_file(bucket, backupname, timestamp)
-            if cp.delete_folder(bucket, f):
+            if cp.delete_folder(f, bucket=bucket):
                 logging.info("{}:{} and his content is now deleted"
                              .format(bucket, f))
             else:
@@ -95,11 +96,11 @@ def retention(bucket, backupname, to_keep):
                      .format(to_keep, len(folders)))
 
 
-def list_backup(bucket, backupname):
+def list_backup(bucket, backupname, **kwargs):
     metadatakey = "metadata"
     tmpfile = "/tmp/backrest_metadata.tmp"
-    cp = JC.PlayWithIt(region_name=region)
-    if cp.download_file(bucket, tmpfile, metadatakey, quiet=True):
+    if cp.download_file(tmpfile, object_name=metadatakey,
+                        bucket=bucket, quiet=True):
         logging.info("The metadata file have been downloaded from {}"
                      .format(bucket))
         with open(tmpfile, 'r') as f:
@@ -111,12 +112,11 @@ def list_backup(bucket, backupname):
 
 
 def add_to_metadata_file(bucket, backupname, timestamp, mode,
-                         dx_product, dx_version):
+                         dx_product, dx_version, **kwargs):
     metadatakey = "metadata"
     tmpfile = "/tmp/backrest_metadata.tmp"
-    cp = JC.PlayWithIt(region_name=region)
     folder = "{}_{}_{}".format(backupname, timestamp, mode)
-    if cp.download_file(bucket, tmpfile, metadatakey):
+    if cp.download_file(tmpfile, object_name=metadatakey, bucket=bucket):
         logging.info("A existing metadata file have been downloaded from {}"
                      .format(bucket))
         with open(tmpfile, 'r') as f:
@@ -129,7 +129,7 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
     d = {"name": backupname,
          "timestamp": timestamp,
          "mode": mode,
-         "size": cp.folder_size(bucket, folder),
+         "size": cp.folder_size(folder, bucket=bucket),
          "product": dx_product,
          "version": dx_version
          }
@@ -139,16 +139,15 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
     with open(tmpfile, 'w+') as tmp:
         tmp.write(json.dumps(listbackups, indent=2, sort_keys=True))
 
-    if cp.upload_file(tmpfile, bucket, metadatakey):
+    if cp.upload_file(tmpfile, bucket=bucket, object_name=metadatakey):
         return True
     else:
         return False
 
-def remove_from_metadata_file(bucket, backupname, timestamp):
+def remove_from_metadata_file(bucket, backupname, timestamp, **kwargs):
     metadatakey = "metadata"
     tmpfile = "/tmp/backrest_metadata.tmp"
-    cp = JC.PlayWithIt(region_name=region)
-    if cp.download_file(bucket, tmpfile, metadatakey):
+    if cp.download_file(tmpfile, object_name=metadatakey, bucket=bucket):
         logging.info("A existing metadata file have been downloaded from {}"
                      .format(bucket))
         with open(tmpfile, 'r') as f:
@@ -165,7 +164,7 @@ def remove_from_metadata_file(bucket, backupname, timestamp):
     with open(tmpfile, 'w+') as tmp:
         tmp.write(json.dumps(listbackups, indent=2, sort_keys=True))
 
-    if cp.upload_file(tmpfile, bucket, metadatakey):
+    if cp.upload_file(tmpfile, bucket=bucket, object_name=metadatakey):
         return True
     else:
         return False
@@ -196,18 +195,29 @@ if __name__ == '__main__':
     except:
         pass
 
+    logging.info("You want to work with {} as cloud provider. Let's go"
+                 .format(cloudprovider))
 
     if cloudprovider == 'aws':
         import JahiaCloud.aws as JC
-
-    logging.info("You want to work with {} as cloud provider. Let's go"
-                 .format(cloudprovider))
+        cp = JC.PlayWithIt(region_name=region)
+    elif cloudprovider== 'azure':
+        import JahiaCloud.Azure as JC
+        import JahiaCloud.aws as AWS
+        cp = JC.PlayWithIt(region_name=region, sto_cont_name=args.backupname,
+                           rg=AZ_RG, sto_account=args.backupname,
+                           authpath=AZ_CRED)
+        sm = AWS.PlayWithIt(region_name="eu-west-1")
+        logging.info("I need to retreive Azure auth_file from Secret Manager")
+        secret = json.loads(sm.get_secret('paas_azure_auth_file'))['value']
+        secret = json.loads(secret)
+        with open(AZ_CRED, 'w') as f:
+            f.write(json.dumps(secret, indent=4, sort_keys=True))
 
     if args.file:
         print("blablabla {}".format(args.file))
 
     if args.action == 'upload':
-
         upload(args.file, args.bucketname, object_name)
         if args.keep:
             retention(args.bucketname, args.backupname, args.keep)

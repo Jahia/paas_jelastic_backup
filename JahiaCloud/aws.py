@@ -37,7 +37,7 @@ class ProgressPercentage(object):
 class PlayWithIt():
     def __init__(self, envname='testenv', accountID='testID',
                  region_name='eu-west-1', env='prod',
-                 accesskey=None, secretkey=None):
+                 accesskey=None, secretkey=None, **kwargs):
         self.region_name = region_name
         self.envname = envname
         self.accountID = accountID
@@ -46,7 +46,8 @@ class PlayWithIt():
         self.secretkey = secretkey
         self.tags = [{'Key': 'product', 'Value': 'cloud-pass'},
                      {'Key': 'envname', 'Value': self.envname},
-                     {'Key': 'env', 'Value': self.env}]
+                     {'Key': 'env', 'Value': self.env},
+                     {'Key': 'project', 'Value': 'jahia_cloud_{}'.format(self.env)}]
         self.awsid = boto3.client('sts').get_caller_identity().get('Account')
         self.iampolicy = """{{"Version": "2012-10-17",
                               "Statement": [
@@ -150,7 +151,7 @@ class PlayWithIt():
             return False
         return True
 
-    def delete_folder(self, bucket, folder):
+    def delete_folder(self, folder, bucket=None, **kwargs):
         if not self.test_if_bucket_exist(bucket):
             logging.warning("You try to delete {} in {} which do not exist"
                             .format(folder, bucket))
@@ -167,7 +168,7 @@ class PlayWithIt():
             return False
         return True
 
-    def upload_file(self, file_name, bucket, object_name=None):
+    def upload_file(self, file_name, bucket=None, object_name=None, **kargs):
         """Upload a file to an S3 bucket
         :param file_name: File to upload
         :param bucket: Bucket to upload to
@@ -217,8 +218,8 @@ class PlayWithIt():
             return False
         return True
 
-    def download_file(self, bucket, file_name,
-                      object_name=None, quiet=False):
+    def download_file(self, file_name, bucket=None,
+                      object_name=None, quiet=False, **kargs):
         """download a file to an S3 bucket
         :param file_name: File to download
         :param bucket: Bucket to download to
@@ -258,7 +259,7 @@ class PlayWithIt():
             return False
         return True
 
-    def folder_list(self, bucket):
+    def folder_list(self, bucket, **kwargs):
         s3 = self.return_client_session('s3')
         # s3 = boto3.client('s3')
         if not self.test_if_bucket_exist(bucket):
@@ -281,7 +282,7 @@ class PlayWithIt():
             return False
         return f
 
-    def folder_size(self, bucket, folder):
+    def folder_size(self, folder, bucket=None, **kwargs):
         if not self.test_if_bucket_exist(bucket):
             logging.warning("You can't get this folder size if {} do not exist"
                             .format(bucket))
