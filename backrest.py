@@ -4,7 +4,7 @@ import argparse
 import os
 import json
 import re
-
+from datetime import datetime
 
 LOG_FORMAT = "%(asctime)s %(levelname)s: [%(funcName)s] %(message)s"
 logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
@@ -217,6 +217,11 @@ if __name__ == '__main__':
     if args.file:
         print("blablabla {}".format(args.file))
 
+    if args.timestamp:
+        timestamp = args.timestamp
+    else:
+        timestamp = datetime.today().strftime('%Y-%m-%dT%H:%M:00')
+
     if args.action == 'upload':
         upload(args.file, args.bucketname, object_name)
         if args.keep:
@@ -225,11 +230,11 @@ if __name__ == '__main__':
         download(args.bucketname, object_name, args.file)
     elif args.action == 'addmeta':
         print(add_to_metadata_file(args.bucketname, args.backupname,
-                                   args.timestamp, args.mode,
+                                   timestamp, args.mode,
                                    dx_product, dx_version))
     elif args.action == 'delmeta':
         print(remove_from_metadata_file(args.bucketname, args.backupname,
-                                        args.timestamp))
+                                        timestamp))
     elif args.action == 'list':
         print(list_backup(args.bucketname, args.backupname))
     elif args.action == 'rotate':
