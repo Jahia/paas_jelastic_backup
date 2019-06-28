@@ -27,40 +27,38 @@ actions:
           urlApi: ${globals.baseApiUrl}/listcronjobs
           httpMethod: GET
     - if('${settings.action}' != 'list'):
-        script: |-
-          var settings = {
-            "backtype": "auto",
-            "retention": "${settings.retention}",
-            "aws_access_key": "${AWS_ACCESS_KEY}",
-            "aws_secret_key": "${AWS_SECRET_KEY}",
-            "backup_name": "${settings.backup_name}"
-          }
+        - script: |-
+            var settings = {
+              "backtype": "auto",
+              "retention": "${settings.retention}",
+              "aws_access_key": "${AWS_ACCESS_KEY}",
+              "aws_secret_key": "${AWS_SECRET_KEY}",
+              "backup_name": "${settings.backup_name}"
+            }
 
-          var dataKeys = {
-            "schedule": "${settings.schedule}",
-            "uid": "${settings.uid}",
-            "envname": "${settings.envname}",
-            "url": "${globals.backupUrl}",
-            "settings": settings,
-            "sudo": "${settings.sudo}",
-            "region": "${settings.region}"
-          }
+            var data = {
+              "schedule": "${settings.schedule}",
+              "uid": "${settings.uid}",
+              "envname": "${settings.envname}",
+              "url": "${globals.backupUrl}",
+              "settings": settings,
+              "sudo": "${settings.sudo}",
+              "region": "${settings.region}"
+            }
 
-          return {"result": 0,
-                  "dataKeys": dataKeys,
-                  "settings": settings}
-    - setGlobals:
-        dataKeys: ${response.dataKeys}
-        settings: ${response.settings}
-    - if('${settings.action}' == 'add'):
-        setGlobals:
-          httpMethod: POST
-    - if('${settings.action}' == 'del'):
-        setGlobals:
-          httpMethod: DELETE
+            return {'result': 0, 'data': String(data)}
+        - setGlobals:
+            data: ${response.data}
+            urlApi: ${globals.baseApiUrl}/cronjob
+        - if('${settings.action}' == 'add'):
+            setGlobals:
+              httpMethod: POST
+        - if('${settings.action}' == 'del'):
+            setGlobals:
+              httpMethod: DELETE
   launchCurl:
     - cmd[${this}]: |-
-        curl -s -X ${globals.httpMethod} -H '${globas.httpHeader}' '${globals.urlApi}' -d '${globals.dataKeys}'
+        curl -s -X ${globals.httpMethod} -H '${globals.httpHeader}' '${globals.urlApi}' -d '${globals.data}'
 
 settings:
   fields:
