@@ -14,6 +14,7 @@ skipNodeEmails: true
 globals:
   baseApiUrl: http://localhost:8080/api
   backupUrl: ${baseUrl}/backup.yml
+  httpHeader: 'Content-Type: application/json'
 
 onInstall:
   - initVars
@@ -24,29 +25,42 @@ actions:
     - if('${settings.action}' == 'list'):
         setGlobals:
           urlApi: ${globals.baseApiUrl}/listcronjobs
+          httpMethod: GET
     - if('${settings.action}' != 'list'):
         script: |-
+          var settings = {
+            "backtype": "auto",
+            "retention": "${settings.retention}",
+            "aws_access_key": "${AWS_ACCESS_KEY}",
+            "aws_secret_key": "${AWS_SECRET_KEY}",
+            "backup_name": "${settings.backup_name}"
+          }
+
           var dataKeys = {
             "schedule": "${settings.schedule}",
             "uid": "${settings.uid}",
             "envname": "${settings.envname}",
             "url": "${globals.backupUrl}",
-            "settings": "",
-            "sudo": "",
-            "region": ""
-          }
-          
-          var settings = {
-            "backtype": "auto",
-            "retention": "${settings.retention}",
-            
+            "settings": settings,
+            "sudo": "${settings.sudo}",
+            "region": "${settings.region}"
           }
 
-
-
+          return {"result": 0,
+                  "dataKeys": dataKeys,
+                  "settings": settings}
+    - setGlobals:
+        dataKeys: ${response.dataKeys}
+        settings: ${response.settings}
+    - if('${settings.action}' == 'add'):
+        setGlobals:
+          httpMethod: POST
+    - if('${settings.action}' == 'del'):
+        setGlobals:
+          httpMethod: DELETE
   launchCurl:
     - cmd[${this}]: |-
-        curl -s '${globals.urlApi}'
+        curl -s -X ${globals.httpMethod} -H '${globas.httpHeader}' '${globals.urlApi}' -d '${globals.dataKeys}'
 
 settings:
   fields:
@@ -67,6 +81,14 @@ settings:
             caption: targeted envname
             type: string
             required: true
+          - name: region
+            caption: targeted envname's region
+            type: string
+            required: true
+          - name: sudo
+            caption: envname's owner email
+            type: string
+            required: true
           - name: uid
             caption: envname's owner UID
             type: string
@@ -75,16 +97,7 @@ settings:
             caption: backup name
             type: string
             required: true
-          - name: aws_access_key
-            caption: AWS Access Key
-            type: string
-            required: true
-          - name: aws_secret_key
-            caption: AWS Secret Key
-            type: string
-            required: true
           - name: retention
             caption: how many backup do we keep
             type: string
-            caption: AWS Secret Key
             type: string
