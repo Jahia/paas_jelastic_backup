@@ -70,6 +70,7 @@ settings:
       values:
         list: list backup
         add: add backup
+        del: remove backup
       required: true
       showIf:
         add:
@@ -100,4 +101,8 @@ settings:
           - name: retention
             caption: how many backup do we keep
             type: string
+        del:
+          - name: envname
+            caption: targeted envname
             type: string
+            required: true
