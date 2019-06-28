@@ -205,7 +205,7 @@ if __name__ == '__main__':
         import JahiaCloud.Azure as JC
         import JahiaCloud.aws as AWS
         cp = JC.PlayWithIt(region_name=region, sto_cont_name=args.backupname,
-                           rg=AZ_RG, sto_account=args.backupname,
+                           rg=AZ_RG, sto_account=args.bucketname,
                            authpath=AZ_CRED)
         sm = AWS.PlayWithIt(region_name="eu-west-1")
         logging.info("I need to retreive Azure auth_file from Secret Manager")

@@ -20,24 +20,24 @@ onInstall:
   - cmd [proc]:
       - cd paas_jelastic_backup
       - tar -czvf digital-factory-data.tar.gz /data/digital-factory-data/
-      - python3 backrest.py -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz -t "${settings.timestamp}" -m ${settings.backtype}
+      - python3 backrest.py -a upload --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz -t "${settings.timestamp}" -m ${settings.backtype}
       - rm -f digital-factory-data.tar.gz
   - cmd [proc]:
       - cd paas_jelastic_backup
       - mysqldump --hex-blob --user=$DB_USER --password=$DB_PASSWORD -h mysqldb --single-transaction --quote-names --opt --databases --compress jahia | gzip > jahia.sql.gz
-      - python3 backrest.py -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f jahia.sql.gz -t "${settings.timestamp}" -m ${settings.backtype}
+      - python3 backrest.py -a upload --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -f jahia.sql.gz -t "${settings.timestamp}" -m ${settings.backtype}
       - rm -f jahia.sql.gz
   - cmd [proc]:
       - cd paas_jelastic_backup
       - tar -czvf digital-factory-config.tar.gz /opt/tomcat/conf/digital-factory-config/
-      - python3 backrest.py -a upload --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz -t "${settings.timestamp}" -m ${settings.backtype}
+      - python3 backrest.py -a upload --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz -t "${settings.timestamp}" -m ${settings.backtype}
       - rm -f digital-factory-config.tar.gz
   - cmd [proc]:
       - cd paas_jelastic_backup
-      - python3 backrest.py -a addmeta --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -t "${settings.timestamp}" -m ${settings.backtype}
+      - python3 backrest.py -a addmeta --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -t "${settings.timestamp}" -m ${settings.backtype}
   - cmd [proc]:
       - cd paas_jelastic_backup
-      - python3 backrest.py -a rotate --bucketname paas-${settings.env}-${env.uid}-${env.envName} --backupname ${settings.backup_name} -t "${settings.timestamp}" -m ${settings.backtype} -k ${settings.retention}
+      - python3 backrest.py -a rotate --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -t "${settings.timestamp}" -m ${settings.backtype} -k ${settings.retention}
 
 settings:
   fields:
