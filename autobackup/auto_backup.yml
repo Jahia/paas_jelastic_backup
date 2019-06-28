@@ -1,0 +1,36 @@
+---
+type: install
+version: 1.5.2
+name: Jahia Cloud - Scheduled backup
+logo: /images/jahia-logo-70x70.png
+id: jahia-cloud-scheduled-backup
+description:
+  short: Jahia Cloud - Scheduled backup
+  text: blabla bla
+baseUrl: https://github.com/Jahia/paas_jelastic_autobackup/raw/master
+ssl: true
+skipNodeEmails: true
+
+
+nodes:
+  - image: lfuentes/paas_autobackup:dev
+    displayName: Scheduled backup
+    count: 1
+    cloudlets: 3
+    nodeGroup: cp
+    env:
+      MASTER_LOGIN: ${settings.masterLogin}
+      MASTER_PWD: ${settings.masterPwd}
+      LANG: en_US.utf8
+
+
+settings:
+  fields:
+    - name: masterLogin
+      type: text
+      caption: master login
+      required: true
+    - name: masterPwd
+      type: text
+      caption: master password
+      required: true

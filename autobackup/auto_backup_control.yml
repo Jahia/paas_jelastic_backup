@@ -1,0 +1,90 @@
+---
+type: update
+version: 1.5.2
+name: Jahia Cloud - Control Scheduled backup
+logo: /images/jahia-logo-70x70.png
+id: jahia-cloud-control-scheduled-backup
+description:
+  short: Jahia Cloud - Control Scheduled backup
+  text: This package is use to interact with the auto_backup.yml node.
+baseUrl: https://github.com/Jahia/paas_jelastic_backup/raw/master
+ssl: true
+skipNodeEmails: true
+
+globals:
+  baseApiUrl: http://localhost:8080/api
+  backupUrl: ${baseUrl}/backup.yml
+
+onInstall:
+  - initVars
+  - launchCurl: cp
+
+actions:
+  initVars:
+    - if('${settings.action}' == 'list'):
+        setGlobals:
+          urlApi: ${globals.baseApiUrl}/listcronjobs
+    - if('${settings.action}' != 'list'):
+        script: |-
+          var dataKeys = {
+            "schedule": "${settings.schedule}",
+            "uid": "${settings.uid}",
+            "envname": "${settings.envname}",
+            "url": "${globals.backupUrl}",
+            "settings": "",
+            "sudo": "",
+            "region": ""
+          }
+          
+          var settings = {
+            "backtype": "auto",
+            "retention": "${settings.retention}",
+            
+          }
+
+
+
+  launchCurl:
+    - cmd[${this}]: |-
+        curl -s '${globals.urlApi}'
+
+settings:
+  fields:
+    - name: action
+      caption: action
+      type: radio-fieldset
+      values:
+        list: list backup
+        add: add backup
+      required: true
+      showIf:
+        add:
+          - name: schedule
+            caption: cron style schedule
+            type: string
+            required: true
+          - name: envname
+            caption: targeted envname
+            type: string
+            required: true
+          - name: uid
+            caption: envname's owner UID
+            type: string
+            required: true
+          - name: backup_name
+            caption: backup name
+            type: string
+            required: true
+          - name: aws_access_key
+            caption: AWS Access Key
+            type: string
+            required: true
+          - name: aws_secret_key
+            caption: AWS Secret Key
+            type: string
+            required: true
+          - name: retention
+            caption: how many backup do we keep
+            type: string
+            caption: AWS Secret Key
+            type: string
