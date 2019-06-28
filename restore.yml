@@ -20,14 +20,14 @@ onInstall:
       - service tomcat stop
   - cmd [proc,cp]:
       - cd paas_jelastic_backup
-      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname paas-${settings.env}-${env.uid}-${env.envName} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-data.tar.gz
+      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname jahiacloud${env.uid} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-data.tar.gz
       - rm -rf /data
       - tar xf digital-factory-data.tar.gz -C /
       - chown tomcat:tomcat -R /data
       - rm digital-factory-data.tar.gz
   - cmd [proc,cp]:
       - cd paas_jelastic_backup
-      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname paas-${settings.env}-${env.uid}-${env.envName} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-config.tar.gz
+      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname jahiacloud${env.uid} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-config.tar.gz
       - rm -rf /opt/tomcat/conf/conf/digital-factory-config
       - tar xf digital-factory-config.tar.gz -C /opt/tomcat/conf
       - chown tomcat:tomcat -R /opt/tomcat/conf
@@ -40,7 +40,7 @@ onInstall:
       - sed -i "s|^processingServer.*|processingServer = false|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
   - cmd [proc]:
       - cd paas_jelastic_backup
-      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname paas-${settings.env}-${env.uid}-${env.envName} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz
+      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname jahiacloud${env.uid} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz
       - gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h mysqldb
       - rm -f jahia.sql.gz
   - cmd [proc,cp]:
