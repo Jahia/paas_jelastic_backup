@@ -19,7 +19,7 @@ onInstall:
       - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git pull --rebase; git checkout tags/${settings.gittag}; echo; else git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git checkout tags/${settings.gittag}; echo; fi
   - cmd [proc]:
       - cd paas_jelastic_backup
-      - python3 backrest.py -a list --bucketname paas-${settings.env}-${env.uid}-${env.envName}
+      - python3 backrest.py -a list --bucketname jahiacloud${env.uid}
   - setGlobals:
       cmdOutput: ${response.out}
 
