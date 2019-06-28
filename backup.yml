@@ -68,7 +68,7 @@ settings:
       inputType: hidden
     - name: gittag
       caption: git tag branch to use
-      default: v0.3
+      default: v0.4
       type: string
       inputType: hidden
     - name: env
@@ -77,7 +77,7 @@ settings:
       default: prod
     - name: timestamp
       caption: timestamp in format %Y-%m-%dT%H:%M:00
-      required: true
+      required: false
       type: string
     - name: retention
       caption: how many backup do you want to keep
