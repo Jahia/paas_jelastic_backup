@@ -50,7 +50,7 @@ class CronJob(Resource):
             command = script.format(login='${MASTER_LOGIN}',
                                     password='${MASTER_PWD}',
                                     url=args.url,
-                                    settings=args.settings,
+                                    settings="'{}'".format(args.settings),
                                     env=args.envname,
                                     region=args.region,
                                     sudo=args.sudo)

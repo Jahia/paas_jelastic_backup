@@ -58,7 +58,7 @@ actions:
               httpMethod: DELETE
   launchCurl:
     - cmd[${this}]: |-
-        curl -s -X ${globals.httpMethod} -H '${globals.httpHeader}' '${globals.urlApi}' -d \'${globals.data}\'
+        curl -s -X ${globals.httpMethod} -H '${globals.httpHeader}' '${globals.urlApi}' -d '${globals.data}'
 
 settings:
   fields:
