@@ -46,7 +46,7 @@ actions:
               "region": "${settings.region}"
             }
 
-            return {'result': 0, 'data': String(data).replace(/'/g, '"')}
+            return {'result': 0, 'data': String(data)}
         - setGlobals:
             data: ${response.data}
             urlApi: ${globals.baseApiUrl}/cronjob
