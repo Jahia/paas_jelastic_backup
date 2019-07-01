@@ -72,7 +72,11 @@ def upload(filename, bucket, object_name, **kwargs):
 
 
 def retention(bucket, backupname, to_keep, **kwargs):
-    folders = cp.folder_list(bucket=bucket)
+    f = cp.folder_list(bucket=bucket)
+    folders = []
+    for e in f:  # this is for remove only auto backup for a backupname
+        if re.search('{}_.*_auto/?$'.format(backupname), e):
+            folders.append(e)
     if to_keep < len(folders):
         logging.info("You ask for {} backup retention but found {}"
                      .format(to_keep, len(folders)))
