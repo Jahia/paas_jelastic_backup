@@ -34,7 +34,7 @@ actions:
               "aws_access_key": "${AWS_ACCESS_KEY}",
               "aws_secret_key": "${AWS_SECRET_KEY}",
               "backup_name": "${settings.backup_name}",
-              "timestamp": "$(date +'%Y-%m-%dT%H:%M:00')"
+              "timestamp": "$(date +\'%Y-%m-%dT%H:%M:00\')"
             }
 
             var data = {
