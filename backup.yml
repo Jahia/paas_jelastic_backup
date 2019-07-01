@@ -1,13 +1,17 @@
 ---
 type: update
 version: 1.5
-name: Jahia - Snapshots an environment and stores it in a S3 bucket
+name: Jahia - Snapshots an environment and stores it in the appropriate object storage
 logo: /images/jahia-logo-70x70.png
 id: jahia-backup-to-bucket
 baseUrl: https://raw.githubusercontent.com/Jahia/paas_jelastic_backup
 
+globals:
+  timestamp: ${globals.timestamp}
 
 onInstall:
+  - if('globals.timestamp' == ''):
+      - setTimestamp
   - cmd [proc]:
       - sudo yum install -y python36 python36-pip
       - python3 -m pip install boto3 --upgrade
@@ -20,24 +24,43 @@ onInstall:
   - cmd [proc]:
       - cd paas_jelastic_backup
       - tar -czvf digital-factory-data.tar.gz /data/digital-factory-data/
-      - python3 backrest.py -a upload --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz -t "${settings.timestamp}" -m ${settings.backtype}
+      - python3 backrest.py -a upload --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz -t "${globals.timestamp}" -m ${settings.backtype}
       - rm -f digital-factory-data.tar.gz
   - cmd [proc]:
       - cd paas_jelastic_backup
       - mysqldump --hex-blob --user=$DB_USER --password=$DB_PASSWORD -h mysqldb --single-transaction --quote-names --opt --databases --compress jahia | gzip > jahia.sql.gz
-      - python3 backrest.py -a upload --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -f jahia.sql.gz -t "${settings.timestamp}" -m ${settings.backtype}
+      - python3 backrest.py -a upload --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -f jahia.sql.gz -t "${globals.timestamp}" -m ${settings.backtype}
       - rm -f jahia.sql.gz
   - cmd [proc]:
       - cd paas_jelastic_backup
       - tar -czvf digital-factory-config.tar.gz /opt/tomcat/conf/digital-factory-config/
-      - python3 backrest.py -a upload --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz -t "${settings.timestamp}" -m ${settings.backtype}
+      - python3 backrest.py -a upload --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz -t "${globals.timestamp}" -m ${settings.backtype}
       - rm -f digital-factory-config.tar.gz
   - cmd [proc]:
       - cd paas_jelastic_backup
-      - python3 backrest.py -a addmeta --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -t "${settings.timestamp}" -m ${settings.backtype}
+      - python3 backrest.py -a addmeta --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -t "${globals.timestamp}" -m ${settings.backtype}
   - cmd [proc]:
       - cd paas_jelastic_backup
-      - python3 backrest.py -a rotate --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -t "${settings.timestamp}" -m ${settings.backtype} -k ${settings.retention}
+      - python3 backrest.py -a rotate --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -t "${globals.timestamp}" -m ${settings.backtype} -k ${settings.retention}
+
+
+actions:
+  setTimestamp:
+    - script: |
+          var diso = new Date()
+          var m = diso.getMonth() + 1
+          var H = diso.getHours()
+          var M = diso.getMinutes()
+          var d = diso.getDay()
+          if(m.toString().length != 2) {m = "0" + m}
+          if(H.toString().length != 2) {H = "0" + H}
+          if(M.toString().length != 2) {M = "0" + M}
+          if(d.toString().length != 2) {d = "0" + d}
+          var timestamp = diso.getFullYear() + "-" + m + "-" + d + "T" + H + ":" + M + ":00"
+          return {'result': 0, 'timestamp': timestamp}
+    - setGlobals:
+        timestamp: ${response.timestamp}
+
 
 settings:
   fields:
