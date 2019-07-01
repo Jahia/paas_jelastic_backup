@@ -41,7 +41,7 @@ onInstall:
   - cmd [proc]:
       - cd paas_jelastic_backup
       - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname jahiacloud${env.uid} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz
-      - gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h mysqldb
+      - gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h mysqldb --max_allowed_packet=1024M
       - rm -f jahia.sql.gz
   - cmd [proc,cp]:
       - service tomcat start

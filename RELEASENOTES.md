@@ -10,6 +10,8 @@
         * `app.py`: flask restful API for interact with crontab
         * `import_package_as_user.py`: execute a package (url) in a Jelastic user context (used here for import the `update.yml`)
 * [IMPROVEMENT]: `backup.yml` now can auto generate timestamp if not sent
+* [BUG]: `max_allowed_packet` size problem with mysql
+    * in `backup.yml` and `restore.yml`, now specify `--max_allowed_packet=1024M` when calling `mysqldump` and `mysql` client
 
 ### v0.4 (2019-06-28)
 * [BUG][IMPROVEMENT]: Azure Storage Account namming convention: only alphanum characters allowed (eg: no dash)

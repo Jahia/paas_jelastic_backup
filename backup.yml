@@ -29,7 +29,7 @@ onInstall:
       - rm -f digital-factory-data.tar.gz
   - cmd [proc]:
       - cd paas_jelastic_backup
-      - mysqldump --hex-blob --user=$DB_USER --password=$DB_PASSWORD -h mysqldb --single-transaction --quote-names --opt --databases --compress jahia | gzip > jahia.sql.gz
+      - mysqldump --hex-blob --user=$DB_USER --password=$DB_PASSWORD -h mysqldb --single-transaction --max_allowed_packet=1024M --quote-names --opt --databases --compress jahia | gzip > jahia.sql.gz
       - python3 backrest.py -a upload --bucketname jahiacloud${env.uid} --backupname ${settings.backup_name} -f jahia.sql.gz ${globals.argTimestamp} -m ${settings.backtype}
       - rm -f jahia.sql.gz
   - cmd [proc]:
