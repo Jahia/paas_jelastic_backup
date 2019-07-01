@@ -28,12 +28,24 @@ actions:
           httpMethod: GET
     - if('${settings.action}' != 'list'):
         - script: |-
+            var diso = new Date()
+            var m = diso.getMonth() + 1
+            var H = diso.getHours()
+            var M = diso.getMinutes()
+            var d = diso.getDay()
+            if(m.toString().length != 2) {m = "0" + m}
+            if(H.toString().length != 2) {H = "0" + H}
+            if(M.toString().length != 2) {M = "0" + M}
+            if(d.toString().length != 2) {d = "0" + d}
+            var timestamp = diso.getFullYear() + "-" + m + "-" + d + "T" + H + ":" + M + ":00"
+
             var settings = {
               "backtype": "auto",
               "retention": "${settings.retention}",
               "aws_access_key": "${AWS_ACCESS_KEY}",
               "aws_secret_key": "${AWS_SECRET_KEY}",
-              "backup_name": "${settings.backup_name}"
+              "backup_name": "${settings.backup_name}",
+              "timestamp": timestamp
             }
 
             var data = {
