@@ -2,7 +2,7 @@
 
 ## actual version: v0.5
 
-### v0.5 (2019-07-01)
+### v0.5 (2019-07-02)
 * [NEW]: autobackup in the `autobackup` folder
     * `auto_backup.yml`: package for create the _auto backup environement_ in Jelastic
     * `auto_backup_control.yml`: package for add/remove/list backup cron in previous env
@@ -12,6 +12,9 @@
 * [IMPROVEMENT]: `backup.yml` now can auto generate timestamp if not sent
 * [BUG]: `max_allowed_packet` size problem with mysql
     * in `backup.yml` and `restore.yml`, now specify `--max_allowed_packet=1024M` when calling `mysqldump` and `mysql` client
+* [BUG]: `backrest.py` was not compatible with old env not created with `_PROVIDE` environement variable
+    * now when metadata is generated, the key `dx_product` will be `dx` if env var `DX_VERSION` is found on the server
+    * if, hypothetically, no `DX_VERSION` was found too, to both corresponding keys in metadata file will be the value `undefined`
 
 ### v0.4 (2019-06-28)
 * [BUG][IMPROVEMENT]: Azure Storage Account namming convention: only alphanum characters allowed (eg: no dash)

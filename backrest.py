@@ -11,7 +11,7 @@ logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
 
 AZ_RG = "paas_backup"
 # AZ_CRED = "{}/.azure/cred.json".format(os.environ['HOME'])
-AZ_CRED = "/tmp/azurecred.json".format(os.environ['HOME'])
+AZ_CRED = "/tmp/azurecred.json"
 
 def argparser():
     parser = argparse.ArgumentParser()
@@ -195,9 +195,9 @@ if __name__ == '__main__':
 
     try:
         dx_version = os.environ['DX_VERSION']
-        dx_product = os.environ['_PROVIDE']
+        dx_product = 'dx'
     except:
-        pass
+        dx_version = dx_product = 'undefined'
 
     logging.info("You want to work with {} as cloud provider. Let's go"
                  .format(cloudprovider))
