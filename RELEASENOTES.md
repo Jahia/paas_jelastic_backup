@@ -15,6 +15,8 @@
 * [BUG]: `backrest.py` was not compatible with old env not created with `_PROVIDE` environement variable
     * now when metadata is generated, the key `dx_product` will be `dx` if env var `DX_VERSION` is found on the server
     * if, hypothetically, no `DX_VERSION` was found too, to both corresponding keys in metadata file will be the value `undefined`
+* [BUG]: Local git repo not well update when moving tag to another commit
+    * add a new `git pull --rebase` after the `git checkout`, hope it will be ok now
 
 ### v0.4 (2019-06-28)
 * [BUG][IMPROVEMENT]: Azure Storage Account namming convention: only alphanum characters allowed (eg: no dash)
