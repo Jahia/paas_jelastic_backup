@@ -19,7 +19,7 @@
     * see https://github.com/boto/boto3/issues/125 for more detail
     * now `backrest.py` is aware of that
 * [BUG]: Local git repo not well update when moving tag to another commit
-    * add a new `git pull --rebase` after the `git checkout`, hope it will be ok now
+    * always `git clone` from scratch by `rm` the local repo if already there
 
 ### v0.4 (2019-06-28)
 * [BUG][IMPROVEMENT]: Azure Storage Account namming convention: only alphanum characters allowed (eg: no dash)
