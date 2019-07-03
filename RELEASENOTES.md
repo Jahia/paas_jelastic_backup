@@ -23,7 +23,7 @@
 * [BUG]: `backrest.py` not properly handling Exceptions
     * replace some `if/else` statement by `try/except`, more relevant
 * [BUG]: `backup.yml` and `listbackup.yml` doesn't set the correct region for AWS credentials file if AWS is not the cloud provider
-    * now test if not AWS as cloud provider and when set AWS region to `eu-west-1` in `~/.aws/credentials` (the Secret Manager used for get Azure Token is there)
+    * now test if not AWS as cloud provider and then set AWS region to `eu-west-1` in `~/.aws/credentials` (the Secret Manager used for get Azure Token is there)
 * [BUG]: `backup.yml` and `listbackup.yml` doesn't install need python modules for Azure
     * now install python3 modules `adal` and `azure`
 
