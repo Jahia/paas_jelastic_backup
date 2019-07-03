@@ -103,13 +103,14 @@ def retention(bucket, backupname, to_keep, **kwargs):
 def list_backup(bucket, backupname, **kwargs):
     metadatakey = "metadata"
     tmpfile = "/tmp/backrest_metadata.tmp"
-    if cp.download_file(tmpfile, object_name=metadatakey,
-                        bucket=bucket, quiet=True):
+    try:
+        cp.download_file(tmpfile, object_name=metadatakey,
+                         bucket=bucket, quiet=True)
         logging.info("The metadata file have been downloaded from {}"
                      .format(bucket))
         with open(tmpfile, 'r') as f:
             listbackups = json.load(f)
-    else:
+    except:
         logging.info("No metadata file yet, nothing to list")
         listbackups = {"backups": []}
     return str(json.dumps(listbackups))
@@ -120,12 +121,13 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
     metadatakey = "metadata"
     tmpfile = "/tmp/backrest_metadata.tmp"
     folder = "{}_{}_{}".format(backupname, timestamp, mode)
-    if cp.download_file(tmpfile, object_name=metadatakey, bucket=bucket):
+    try:
+        cp.download_file(tmpfile, object_name=metadatakey, bucket=bucket)
         logging.info("A existing metadata file have been downloaded from {}"
                      .format(bucket))
         with open(tmpfile, 'r') as f:
             listbackups = json.load(f)
-    else:
+    except:
         logging.info("No existing metadata file found in {}, start a new one"
                      .format(bucket))
         listbackups = {"backups": []}
@@ -143,20 +145,22 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
     with open(tmpfile, 'w+') as tmp:
         tmp.write(json.dumps(listbackups, indent=2, sort_keys=True))
 
-    if cp.upload_file(tmpfile, bucket=bucket, object_name=metadatakey):
+    try:
+        cp.upload_file(tmpfile, bucket=bucket, object_name=metadatakey)
         return True
-    else:
+    except:
         return False
 
 def remove_from_metadata_file(bucket, backupname, timestamp, **kwargs):
     metadatakey = "metadata"
     tmpfile = "/tmp/backrest_metadata.tmp"
-    if cp.download_file(tmpfile, object_name=metadatakey, bucket=bucket):
+    try:
+        cp.download_file(tmpfile, object_name=metadatakey, bucket=bucket)
         logging.info("A existing metadata file have been downloaded from {}"
                      .format(bucket))
         with open(tmpfile, 'r') as f:
             listbackups = json.load(f)
-    else:
+    except:
         logging.info("No metadata file yet, nothing to remove")
         return True
 
@@ -168,9 +172,10 @@ def remove_from_metadata_file(bucket, backupname, timestamp, **kwargs):
     with open(tmpfile, 'w+') as tmp:
         tmp.write(json.dumps(listbackups, indent=2, sort_keys=True))
 
-    if cp.upload_file(tmpfile, bucket=bucket, object_name=metadatakey):
+    try:
+        cp.upload_file(tmpfile, bucket=bucket, object_name=metadatakey)
         return True
-    else:
+    except:
         return False
 
 
