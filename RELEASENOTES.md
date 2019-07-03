@@ -15,6 +15,9 @@
 * [BUG]: `backrest.py` was not compatible with old env not created with `_PROVIDE` environement variable
     * now when metadata is generated, the key `dx_product` will be `dx` if env var `DX_VERSION` is found on the server
     * if, hypothetically, no `DX_VERSION` was found too, to both corresponding keys in metadata file will be the value `undefined`
+* [BUG]: Due to a AWS's API bug, we must not specify the `LocationConstraint` when the region is `us-east-1` and you want to create a bucket
+    * see https://github.com/boto/boto3/issues/125 for more detail
+    * now `backrest.py` is aware of that
 * [BUG]: Local git repo not well update when moving tag to another commit
     * add a new `git pull --rebase` after the `git checkout`, hope it will be ok now
 

@@ -119,10 +119,17 @@ class PlayWithIt():
                             .format(name))
             return False
         s3 = self.return_resource_session('s3')
+        args = {'Bucket': name}
+        # bellow is because us-east-1 is not a valid LocationConstraint
+        # for aws api, see https://github.com/boto/boto3/issues/125
+        # TL;DR: if us-west-1 => do not specify it
+        # may be to remove when it will be fixed
+        if self.region_name != 'us-east-1':
+            args['CreateBucketConfiguration'] = {'LocationConstraint':
+                                                  self.region_name}
+        # well, back to normal
         try:
-            s3.create_bucket(Bucket=name,
-                             CreateBucketConfiguration={
-                                 'LocationConstraint': self.region_name})
+            s3.create_bucket(**args)
             logging.info("Bucket {} is now created in region {}"
                          .format(name, self.region_name))
         except ClientError as e:
