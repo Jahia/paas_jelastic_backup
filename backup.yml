@@ -20,7 +20,8 @@ onInstall:
       - echo "[default]" > ~/.aws/credentials
       - echo "aws_access_key_id= ${settings.aws_access_key}" >> ~/.aws/credentials
       - echo "aws_secret_access_key = ${settings.aws_secret_key}" >> ~/.aws/credentials
-      - echo "region= $(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST)" >> ~/.aws/credentials
+      - provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export aws_region
+      - echo "region=$aws_region" >> ~/.aws/credentials
       - if [ -d paas_jelastic_backup ]; then rm -fr paas_jelastic_backup; fi; git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git checkout tags/${settings.gittag}; echo
   - cmd [proc]:
       - cd paas_jelastic_backup
