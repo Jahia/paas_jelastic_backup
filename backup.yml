@@ -21,7 +21,7 @@ onInstall:
       - echo "aws_access_key_id= ${settings.aws_access_key}" >> ~/.aws/credentials
       - echo "aws_secret_access_key = ${settings.aws_secret_key}" >> ~/.aws/credentials
       - echo "region= $(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST)" >> ~/.aws/credentials
-      - [ -d paas_jelastic_backup ] && rm -fr paas_jelastic_backup; git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git checkout tags/${settings.gittag}; echo
+      - if [ -d paas_jelastic_backup ]; then rm -fr paas_jelastic_backup; fi; git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git checkout tags/${settings.gittag}; echo
   - cmd [proc]:
       - cd paas_jelastic_backup
       - tar -czvf digital-factory-data.tar.gz /data/digital-factory-data/
