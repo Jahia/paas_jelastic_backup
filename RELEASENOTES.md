@@ -2,7 +2,7 @@
 
 ## actual version: v0.5
 
-### v0.5 (2019-07-02)
+### v0.5 (2019-07-03)
 * [NEW]: autobackup in the `autobackup` folder
     * `auto_backup.yml`: package for create the _auto backup environement_ in Jelastic
     * `auto_backup_control.yml`: package for add/remove/list backup cron in previous env
@@ -20,6 +20,12 @@
     * now `backrest.py` is aware of that
 * [BUG]: Local git repo not well update when moving tag to another commit
     * always `git clone` from scratch by `rm` the local repo if already there
+* [BUG]: `backrest.py` not properly handling Exceptions
+    * replace some `if/else` statement by `try/except`, more relevant
+* [BUG]: `backup.yml` and `listbackup.yml` doesn't set the correct region for AWS credentials file if AWS is not the cloud provider
+    * now test if not AWS as cloud provider and when set AWS region to `eu-west-1` in `~/.aws/credentials` (the Secret Manager used for get Azure Token is there)
+* [BUG]: `backup.yml` and `listbackup.yml` doesn't install need python modules for Azure
+    * now install python3 modules `adal` and `azure`
 
 ### v0.4 (2019-06-28)
 * [BUG][IMPROVEMENT]: Azure Storage Account namming convention: only alphanum characters allowed (eg: no dash)
