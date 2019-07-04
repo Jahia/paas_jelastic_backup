@@ -19,8 +19,10 @@ onInstall:
       - echo "region=$aws_region" >> ~/.aws/credentials
       - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git pull --rebase; git checkout tags/${settings.gittag}; echo; else git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git checkout tags/${settings.gittag}; echo; fi
   - cmd [proc]:
+      - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
+      - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
-      - python3 backrest.py -a list --bucketname jahiacloud${env.uid}
+      - python3 backrest.py -a list --bucketname jahiacloud${cluster_role}${env.uid}${env_region}
   - setGlobals:
       cmdOutput: ${response.out}
 
