@@ -25,8 +25,9 @@ onInstall:
       - setGlobals:
           bucketname: jc${globals.envRole_source}${env.uid}${globals.region_source}
   - if(!settings.source_env):
-      - setGlobals:
-          bucketname: jc${cluster_role}${env.uid}${env_region}
+      - if(!settings.envrole_source):
+          - setGlobals:
+              bucketname: jc${cluster_role}${env.uid}${env_region}
 
   - cmd [proc,cp]:
       - sudo yum install -y python36 python36-pip
@@ -38,7 +39,7 @@ onInstall:
       - echo "aws_secret_access_key = ${settings.aws_secret_key}" >> ~/.aws/credentials
       - provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export aws_region
       - echo "region=$aws_region" >> ~/.aws/credentials
-      - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git pull --rebase; git checkout tags/${settings.gittag}; echo; else git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git checkout tags/${settings.gittag}; echo; fi
+      - if [ -d paas_jelastic_backup ]; then rm -fr paas_jelastic_backup; fi; git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git checkout tags/${settings.gittag}; echo
       - service tomcat stop
   - cmd [proc,cp]:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
@@ -144,7 +145,7 @@ settings:
     - name: envrole_source ?
       type: list
       caption: envrole_source ?
-      value:
+      values:
         value1: dev
         value2: prod
     - name: gitrepo
