@@ -28,6 +28,8 @@
     * now install python3 modules `adal` and `azure`
 * [CHANGE]: rename _Bucket_ and _Storage Account_ names
     * now that's `jahiacloud(prod|dev)${env.uid}${cloudregion}`
+* [BUG]: `adal` is not installed
+    * need to upgrade `pip` first whith command `python3 -m pip install --upgrade pip`
 
 ### v0.4 (2019-06-28)
 * [BUG][IMPROVEMENT]: Azure Storage Account namming convention: only alphanum characters allowed (eg: no dash)

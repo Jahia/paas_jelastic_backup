@@ -10,6 +10,7 @@ baseUrl: https://raw.githubusercontent.com/Jahia/paas_jelastic_backup
 onInstall:
   - cmd [proc]:
       - sudo yum install -y python36 python36-pip
+      - python3 -m pip install --upgrade pip
       - python3 -m pip install --upgrade boto3 azure adal
       - if [ ! -d ~/.aws ]; then mkdir ~/.aws; fi
       - echo "[default]" > ~/.aws/credentials
