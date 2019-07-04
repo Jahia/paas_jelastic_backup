@@ -12,7 +12,7 @@ onInstall:
       - if(settings.region_source):
           - script: |
                 var region = '${settings.region_source}'
-            return {'result': 0, 'resp': region.replace(/(\W|_)+/g, '')}
+                return {'result': 0, 'resp': region.replace(/(\W|_)+/g, '')}
           - setGlobals:
                 wc_region_source: ${response.resp}
           - if(settings.envrole_source):
