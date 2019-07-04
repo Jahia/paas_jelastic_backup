@@ -38,10 +38,9 @@ def argparser():
     parser.add_argument("-k", "--keep",
                         help="how many backup do you want to keep",
                         type=int)
-    # parser.add_argument("-c", "--cloudprovider",
-    #                     help="the cloud provider for the operations",
-    #                     required=True,
-    #                     choices=['aws'])
+    parser.add_argument("-F", "--foreign",
+                        help="if backup is from another cloud/region, eg: aws,eu-west-1"
+                        )
     parser.add_argument("-t", "--timestamp",
                         help="timestamp in format %%Y-%%m-%%dT%%H:%%M:00",
                         required=False)
@@ -182,16 +181,23 @@ def remove_from_metadata_file(bucket, backupname, timestamp, **kwargs):
 if __name__ == '__main__':
     args = argparser()
 
-    try:
-        with open('/metadata_from_HOST', 'r') as f:
-            props = dict(line.strip().split('=', 1) for line in f)
-            cloudprovider = props['JEL_CLOUDPROVIDER']
-            if cloudprovider not in ['aws', 'azure']:
-                exit(1)
-            region = props['JEL_REGION']
-    except:
-        logging.error("A problem occured when reading /metadata_from_HOST file. Exiting")
-        exit(1)
+
+    if args.foreign:
+        cloudprovider = args.foreign.split(',')[0]
+        region = args.foreign.split(',')[1]
+        logging.info("you specify a foreign env: {} on {}"
+                     .format(region, cloudprovider))
+    else:
+        try:
+            with open('/metadata_from_HOST', 'r') as f:
+                props = dict(line.strip().split('=', 1) for line in f)
+                cloudprovider = props['JEL_CLOUDPROVIDER']
+                if cloudprovider not in ['aws', 'azure']:
+                    exit(1)
+                region = props['JEL_REGION']
+        except:
+            logging.error("A problem occured when reading /metadata_from_HOST file. Exiting")
+            exit(1)
 
 
     object_name = "{}_{}_{}/{}".format(args.backupname, args.timestamp,

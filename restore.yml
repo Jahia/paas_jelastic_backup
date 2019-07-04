@@ -8,6 +8,26 @@ baseUrl: https://raw.githubusercontent.com/Jahia/paas_jelastic_backup
 
 
 onInstall:
+  - if(settings.cloud_source):
+      - if(settings.region_source):
+          - script: |
+                var region = '${settings.region_source}'
+            return {'result': 0, 'resp': region.replace(/(\W|_)+/g, '')}
+          - setGlobals:
+                wc_region_source: ${response.resp}
+          - if(settings.envrole_source):
+              - if(settings.uid_source):
+                  - setGlobals:
+                      bucketname: jc${settings.envrole_source}${settings.uid_source}${settings.wc_region_source} -F ${settings.cloud_source},${settings.region_source}
+
+  - if(settings.source_env):
+      - envSource
+      - setGlobals:
+          bucketname: jc${globals.envRole_source}${env.uid}${globals.region_source}
+  - if(!settings.source_env):
+      - setGlobals:
+          bucketname: jc${cluster_role}${env.uid}${env_region}
+
   - cmd [proc,cp]:
       - sudo yum install -y python36 python36-pip
       - python3 -m pip install --upgrade pip
@@ -24,7 +44,7 @@ onInstall:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
-      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname jc${cluster_role}${env.uid}${env_region} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-data.tar.gz
+      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-data.tar.gz
       - rm -rf /data
       - tar xf digital-factory-data.tar.gz -C /
       - chown tomcat:tomcat -R /data
@@ -33,7 +53,7 @@ onInstall:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
-      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname jc${cluster_role}${env.uid}${env_region} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-config.tar.gz
+      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-config.tar.gz
       - rm -rf /opt/tomcat/conf/conf/digital-factory-config
       - tar xf digital-factory-config.tar.gz -C /opt/tomcat/conf
       - chown tomcat:tomcat -R /opt/tomcat/conf
@@ -48,11 +68,47 @@ onInstall:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
-      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname jc${cluster_role}${env.uid}${env_region} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz
+      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz
       - gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h mysqldb --max_allowed_packet=1024M
       - rm -f jahia.sql.gz
   - cmd [proc,cp]:
       - service tomcat start
+
+actions:
+  envSource:
+    - script: |
+          var envInfo = jelastic.env.control.getenvinfo('${settings.source_env}', session)
+          for (var i = 0, n = envInfo.nodes; i < n.length; i++) {
+            if (n[i].nodeGroup == 'proc') {
+              var nodeID = n[i].id
+            }
+          }
+          var metadata = jelastic.env.file.read('${settings.source_env}', session, '/metadata_from_HOST', null, null, nodeID).body.toString()
+
+          var re = /(\S|\n|\r)*JEL_REGION=(\S+)(\S|\n|\r)*/
+          var region = metadata.replace(re, '$2')
+          var region = region.replace(/(\W|_)+/g, '')
+
+          var re = /(\S|\n|\r)*JEL_CLOUDPROVIDER=(\S+)(\S|\n|\r)*/
+          var cloudProvider = metadata.replace(re, '$2')
+
+          var re = /(\S|\n|\r)*JEL_AVAILABILITYZONE=(\S+)(\S|\n|\r)*/
+          var az = metadata.replace(re, '$2')
+
+          var re = /(\S|\n|\r)*JEL_ENV_ROLE=(\S+)(\S|\n|\r)*/
+          var envRole = metadata.replace(re, '$2')
+
+          return {'result': 0,
+            'region': region,
+            'cloudProvider': cloudProvider,
+            'az': az,
+            'envRole': envRole}
+    - setGlobals:
+          region_source: ${response.region}
+          cloudProvider_source: ${response.cloudProvider}
+          az_source: ${response.az}
+          envRole_source: ${response.envRole}
+
 
 settings:
   fields:
@@ -71,6 +127,26 @@ settings:
       caption: AWS Secret Key
       vtype: text
       required: true
+    - name: source_env
+      type: envlist
+      caption: backup from ?
+      valueField: appid
+      editable: true
+    - name: cloud_source
+      type: string
+      caption: cloud source ?
+    - name: region_source ?
+      type: string
+      caption: region_source ?
+    - name: uid_source ?
+      type: string
+      caption: uid_source ?
+    - name: envrole_source ?
+      type: list
+      caption: envrole_source ?
+      value:
+        value1: dev
+        value2: prod
     - name: gitrepo
       caption: backrest git repo url
       type: string
@@ -78,7 +154,7 @@ settings:
       inputType: hidden
     - name: gitbranch
       caption: git repo branch to use
-      default: master
+      default: wip_envsource
       type: string
       inputType: hidden
     - name: gittag
