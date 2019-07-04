@@ -2,7 +2,7 @@
 
 ## actual version: v0.5
 
-### v0.5 (2019-07-03)
+### v0.5 (2019-07-04)
 * [NEW]: autobackup in the `autobackup` folder
     * `auto_backup.yml`: package for create the _auto backup environement_ in Jelastic
     * `auto_backup_control.yml`: package for add/remove/list backup cron in previous env
@@ -26,6 +26,8 @@
     * now test if not AWS as cloud provider and then set AWS region to `eu-west-1` in `~/.aws/credentials` (the Secret Manager used for get Azure Token is there)
 * [BUG]: `backup.yml` and `listbackup.yml` doesn't install need python modules for Azure
     * now install python3 modules `adal` and `azure`
+* [CHANGE]: rename _Bucket_ and _Storage Account_ names
+    * now that's `jahiacloud(prod|dev)${env.uid}${cloudregion}`
 
 ### v0.4 (2019-06-28)
 * [BUG][IMPROVEMENT]: Azure Storage Account namming convention: only alphanum characters allowed (eg: no dash)
