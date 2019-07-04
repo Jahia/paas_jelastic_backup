@@ -24,7 +24,7 @@ onInstall:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
-      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname jahiacloud${cluster_role}${env.uid}${env_region} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-data.tar.gz
+      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname jc${cluster_role}${env.uid}${env_region} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-data.tar.gz
       - rm -rf /data
       - tar xf digital-factory-data.tar.gz -C /
       - chown tomcat:tomcat -R /data
@@ -33,7 +33,7 @@ onInstall:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
-      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname jahiacloud${cluster_role}${env.uid}${env_region} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-config.tar.gz
+      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname jc${cluster_role}${env.uid}${env_region} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-config.tar.gz
       - rm -rf /opt/tomcat/conf/conf/digital-factory-config
       - tar xf digital-factory-config.tar.gz -C /opt/tomcat/conf
       - chown tomcat:tomcat -R /opt/tomcat/conf
@@ -48,7 +48,7 @@ onInstall:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
-      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname jahiacloud${cluster_role}${env.uid}${env_region} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz
+      - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname jc${cluster_role}${env.uid}${env_region} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz
       - gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h mysqldb --max_allowed_packet=1024M
       - rm -f jahia.sql.gz
   - cmd [proc,cp]:
