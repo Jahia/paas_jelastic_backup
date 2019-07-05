@@ -13,6 +13,8 @@
             * `region_source`: eg: us-east-1, centralus, etc (set here the cloud region name, not the jelastic one)
             * `uid_source`: the UID of the backup's owner
             * `envrole_source`: (dev|prod) (the cluster from with the backup have been done)
+* [IMPROVEMENT]: Add a `README.md` file for `autobackup`
+    * contains basics informations about how to use it
 
 ### v0.5 (2019-07-04)
 * [NEW]: autobackup in the `autobackup` folder
