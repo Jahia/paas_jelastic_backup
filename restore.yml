@@ -18,12 +18,12 @@ onInstall:
           - if(settings.envrole_source):
               - if(settings.uid_source):
                   - setGlobals:
-                      bucketname: jc${settings.envrole_source}${settings.uid_source}${settings.wc_region_source} -F ${settings.cloud_source},${settings.region_source}
+                      bucketname: jc${settings.envrole_source}${settings.uid_source}${globals.wc_region_source} -F ${settings.cloud_source},${settings.region_source}
 
   - if(settings.source_env):
       - envSource
       - setGlobals:
-          bucketname: jc${globals.envRole_source}${env.uid}${globals.region_source}
+          bucketname: jc${globals.envRole_source}${env.uid}${globals.region_source} -F ${globals.cloudProvider_source},${globals.regionRealName_source}
   - if(!settings.source_env):
       - if(!settings.envrole_source):
           - setGlobals:
@@ -87,8 +87,8 @@ actions:
           var metadata = jelastic.env.file.read('${settings.source_env}', session, '/metadata_from_HOST', null, null, nodeID).body.toString()
 
           var re = /(\S|\n|\r)*JEL_REGION=(\S+)(\S|\n|\r)*/
-          var region = metadata.replace(re, '$2')
-          var region = region.replace(/(\W|_)+/g, '')
+          var regionRealName = metadata.replace(re, '$2')
+          var region = regionRealName.replace(/(\W|_)+/g, '')
 
           var re = /(\S|\n|\r)*JEL_CLOUDPROVIDER=(\S+)(\S|\n|\r)*/
           var cloudProvider = metadata.replace(re, '$2')
@@ -101,14 +101,16 @@ actions:
 
           return {'result': 0,
             'region': region,
+            'regionRealName': regionRealName,
             'cloudProvider': cloudProvider,
             'az': az,
             'envRole': envRole}
     - setGlobals:
-          region_source: ${response.region}
-          cloudProvider_source: ${response.cloudProvider}
-          az_source: ${response.az}
-          envRole_source: ${response.envRole}
+        region_source: ${response.region}
+        regionRealName_source: ${response.regionRealName}
+        cloudProvider_source: ${response.cloudProvider}
+        az_source: ${response.az}
+        envRole_source: ${response.envRole}
 
 
 settings:
@@ -136,18 +138,18 @@ settings:
     - name: cloud_source
       type: string
       caption: cloud source ?
-    - name: region_source ?
+    - name: region_source
       type: string
       caption: region_source ?
-    - name: uid_source ?
+    - name: uid_source
       type: string
       caption: uid_source ?
-    - name: envrole_source ?
+    - name: envrole_source
       type: list
       caption: envrole_source ?
       values:
-        value1: dev
-        value2: prod
+        dev: dev
+        prod: prod
     - name: gitrepo
       caption: backrest git repo url
       type: string
