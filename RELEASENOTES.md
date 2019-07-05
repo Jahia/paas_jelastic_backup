@@ -1,6 +1,18 @@
 # Backup Package Release notes
 
-## actual version: v0.5
+## actual version: v0.6
+
+### v0.6 (2019-07-05)
+* [NEW]: now it's possible to restore backup from another env, cloud provider, region, cluster env, another uid
+    * for client day use:
+        * if an user want to restore a env to another one, just select the source env with setting `source_env`
+            * env source and target env can be in different cloud provider, region
+    * for cloud masters:
+        * for precise control of the source you want to be restored, do not user `source_env` settings but set all these:
+            * `cloud_source`: (aws|azure)
+            * `region_source`: eg: us-east-1, centralus, etc (set here the cloud region name, not the jelastic one)
+            * `uid_source`: the UID of the backup's owner
+            * `envrole_source`: (dev|prod) (the cluster from with the backup have been done)
 
 ### v0.5 (2019-07-04)
 * [NEW]: autobackup in the `autobackup` folder

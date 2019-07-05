@@ -157,12 +157,12 @@ settings:
       inputType: hidden
     - name: gitbranch
       caption: git repo branch to use
-      default: wip_envsource
+      default: master
       type: string
       inputType: hidden
     - name: gittag
       caption: git tag branch to use
-      default: v0.5
+      default: v0.6
       type: string
       inputType: hidden
     - name: env
