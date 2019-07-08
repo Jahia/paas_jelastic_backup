@@ -21,6 +21,8 @@ nodes:
     env:
       MASTER_LOGIN: ${settings.masterLogin}
       MASTER_PWD: ${settings.masterPwd}
+      AWS_ACCESS_KEY: ${settings.awsAccess}
+      AWS_SECRET_KEY: ${settings.awsSecret}
       LANG: en_US.utf8
 
 
@@ -33,4 +35,12 @@ settings:
     - name: masterPwd
       type: text
       caption: master password
+      required: true
+    - name: awsAccess
+      type: text
+      caption: AWS Access Key
+      required: true
+    - name: awsSecret
+      type: text
+      caption: AWS Secret Key
       required: true
