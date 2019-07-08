@@ -1,0 +1,16 @@
+[Unit]
+Description=Jahia Cloud Scheduled Backup service
+After=network.target
+
+[Service]
+Environment= "FLASK_ENV=development"
+ExecStart=/usr/bin/python3.6 -m flask run --host=0.0.0.0 --port=8080
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=jahia-cloud-backup
+ExecStop=kill $(ps -edf | grep -v grep | awk '$NF~/flask/ {print $2}')
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

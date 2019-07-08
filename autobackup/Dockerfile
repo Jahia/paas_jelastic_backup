@@ -1,22 +1,24 @@
-FROM jdeathe/centos-ssh
+FROM centos:centos7
 
-RUN yum -y install python36 python36-pip cronie glibc-common \
+RUN yum -y update \
+  && yum -y install epel-release cronie glibc-common \
+  && yum -y install python36 python36-pip \
   && yum clean all \
-  && mkdir /pylastic \
-  && rm -rf /etc/ld.so.cache \
-  && rm -rf /sbin/sln 
+  && mkdir /pylastic 
 
-RUN pip3.6 install requests flask flask_restful python-crontab
+RUN python3 -m pip install --upgrade pip \
+  && python3 -m pip install requests flask flask_restful python-crontab
 
 
-COPY supervisord.conf /etc/supervisord.conf
-COPY supervisord_crond.conf /etc/supervisord.d/crond.conf
-COPY supervisord_flask.conf /etc/supervisord.d/flask.conf
 COPY app.py /app.py
 COPY pylastic/pylastic.py /pylastic/pylastic.py
 COPY import_package_as_user.py /import_package_as_user.py
+COPY launch_api.service /etc/systemd/system/launch_api.service
+COPY rsyslog_api.conf /etc/rsyslog.d/api.conf
 
-ENV FLASK_ENV="development" LANG="en_US.utf8" LC_ALL="en_US.utf8"
+RUN systemctl enable launch_api.service \
+  && sed 's/^\(CRONDARGS=\)/\1"-s"/' -i /etc/sysconfig/crond
+
 
 EXPOSE 8080/tcp
-CMD ["/usr/bin/supervisord", "--configuration=/etc/supervisord.conf"]
+CMD /usr/sbin/init
