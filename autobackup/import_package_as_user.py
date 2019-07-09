@@ -8,6 +8,8 @@ from pylastic.pylastic import *
 LOG_FORMAT = "%(asctime)s %(levelname)s: [%(funcName)s] %(message)s"
 logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
 
+logging.info("BACKUP START")
+
 try:
     with open('/metadata_from_HOST', 'r') as f:
         props = dict(line.strip().split('=', 1) for line in f)
@@ -59,11 +61,20 @@ args = argparser()
 
 
 def importPackage(classname):
-    classname.devScriptEval(urlpackage=args.url,
-                            shortdomain=args.env,
-                            region=args.region,
-                            settings=json.loads(args.settings))
-                            #settings=args.settings)
+    try:
+        resp = classname.devScriptEval(urlpackage=args.url,
+                                       shortdomain=args.env,
+                                       region=args.region,
+                                       settings=json.loads(args.settings))
+    except:
+        logging.error("BACKUP END: An error was returning during package execution")
+        if userSess:
+            userSess.signOut()
+        if adminSess:
+            adminSess.signOut()
+        quit(1)
+    return resp
+
 
 if args.token:
     adminSess = Jelastic(args.jelastic, token=args.token)
@@ -83,14 +94,18 @@ else:
 
 if args.sudo:
     userToken = adminSess.sysAdminSignAsUser(args.sudo)
-    adminSess.signOut()
     userSess = Jelastic(args.jelastic, login=args.sudo,
                         session=userToken)
-    userSess.devScriptEval(urlpackage=args.url,
-                           shortdomain=args.env,
-                           region=args.region,
-                           settings=json.loads(args.settings))
-    userSess.getSessionAttribute()
+    resp = importPackage(userSess)
 else:
     importPackage(adminSess)
+
+if userSess:
+    userSess.signOut()
+if adminSess:
     adminSess.signOut()
+r = json.loads(resp.text)
+if r['response']['result'] == 0:
+    logging.info("BACKUP END: the backup package return no error")
+else:
+    logging.error("BACKUP END: An error was return by the backup package: {}".format(resp.text))

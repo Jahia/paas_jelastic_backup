@@ -1,4 +1,6 @@
 FROM centos:centos7
+ARG DD_API_KEY
+
 
 RUN yum -y update \
   && yum -y install epel-release cronie glibc-common \
@@ -18,6 +20,13 @@ COPY rsyslog_api.conf /etc/rsyslog.d/api.conf
 
 RUN systemctl enable launch_api.service \
   && sed 's/^\(CRONDARGS=\)/\1"-s"/' -i /etc/sysconfig/crond
+
+RUN DD_INSTALL_ONLY=true DD_API_KEY=$DD_API_KEY bash -c "$(curl -L https://raw.githubusercontent.com/DataDog/datadog-agent/master/cmd/agent/install_script.sh)" \
+  && cp /usr/lib/systemd/system/datadog-agent.service /etc/systemd/system/datadog-agent.service \
+  && sed 's/^\(User=\).*$/\1root/' \
+  && systemctl enable datadog-agent
+
+COPY dd_backup.yaml /etc/datadog-agent/conf.d/backup.yaml
 
 
 EXPOSE 8080/tcp
