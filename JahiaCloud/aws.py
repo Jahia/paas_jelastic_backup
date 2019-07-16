@@ -128,10 +128,16 @@ class PlayWithIt():
             args['CreateBucketConfiguration'] = {'LocationConstraint':
                                                   self.region_name}
         # well, back to normal
+        if self.env == 'prod':
+            tag = [{'Key': 'product', 'Value': 'jahia_cloud_prod'}]
+        else:
+            tag = [{'Key': 'product', 'Value': 'jahia_cloud_dev'}]
         try:
             s3.create_bucket(**args)
             logging.info("Bucket {} is now created in region {}"
                          .format(name, self.region_name))
+            b_tagging = s3.BucketTagging(name)
+            set_tag = b_tagging.put(Tagging={'TagSet':tag})
         except ClientError as e:
             logging.error("Cannot create Bucket {} in region {}"
                           .format(name, self.region_name))

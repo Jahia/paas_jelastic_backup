@@ -102,13 +102,18 @@ class PlayWithIt():
     def create_sto_account(self):
         if self.check_if_sto_acc_exist():
             return False
+        if self.env == 'prod':
+            tag = {'product': 'jahia_cloud_prod'}
+        else:
+            tag = {'product': 'jahia_cloud_dev'}
         client = self.return_session(StorageManagementClient)
         sto_async_operation = client.storage_accounts.create(
             self.rg, self.sto_account,
             StorageAccountCreateParameters(
                 sku=Sku(name=SkuName.standard_ragrs),
                 kind=Kind.storage_v2,
-                location=self.region_name
+                location=self.region_name,
+                tags=tag
             )
         )
         if sto_async_operation.result():
