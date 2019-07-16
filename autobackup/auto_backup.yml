@@ -7,40 +7,62 @@ id: jahia-cloud-scheduled-backup
 description:
   short: Jahia Cloud - Scheduled backup
   text: blabla bla
-baseUrl: https://github.com/Jahia/paas_jelastic_autobackup/raw/master
+baseUrl: https://github.com/Jahia/paas_jelastic_backup/raw/v1.0/autobackup
 ssl: true
 skipNodeEmails: true
 
 
 nodes:
-  - image: lfuentes/paas_autobackup:dev
+  - image: jahia/paas_autobackup:v1.0
     displayName: Scheduled backup
     count: 1
-    cloudlets: 3
+    cloudlets: 5
     nodeGroup: cp
     env:
       MASTER_LOGIN: ${settings.masterLogin}
       MASTER_PWD: ${settings.masterPwd}
       AWS_ACCESS_KEY: ${settings.awsAccess}
       AWS_SECRET_KEY: ${settings.awsSecret}
+      DD_API_KEY: ${settings.dd_api_key}
       LANG: en_US.utf8
+    volumes:
+      - /var/spool/cron
+
+onInstall:
+  - script: |
+        var splitdomain = '${env.domain}'.split('.')
+        if (splitdomain[splitdomain.length - 4] == 'dev') {
+          var env = 'dev'
+        } else {
+          var env = 'prod'
+        }
+        return {'result': 0, 'resp': env}
+  - setGlobals:
+      env: ${response.resp}
+  - cmd[cp]: |-
+      sed 's/__ENV__/${globals.env}/' -i /etc/datadog-agent/datadog.yaml
+      systemctl enable --now datadog-agent
 
 
 settings:
   fields:
     - name: masterLogin
-      type: text
+      type: string
       caption: master login
       required: true
     - name: masterPwd
-      type: text
+      type: string
       caption: master password
       required: true
     - name: awsAccess
-      type: text
+      type: string
       caption: AWS Access Key
       required: true
     - name: awsSecret
-      type: text
+      type: string
       caption: AWS Secret Key
+      required: true
+    - name: dd_api_key
+      type: string
+      caption: datadog api key
       required: true
