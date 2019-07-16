@@ -1,6 +1,22 @@
 # Backup Package Release notes
 
-## actual version: v0.6
+## actual version: v1.0
+
+### v1.0 (2019-07-16)
+* [NEW][IMPROVEMENT]: functionnal `autobackup`
+    * the node now get an integrated _Datadog_ agent
+        * _API key_ have to be set as a setting when importing `auto_backup.yml` in order to be setted as a env var
+        * a python script is now sending custom metrics to _Datadog_
+            * for each env backup: env name, duration and status (_ok_, _in progress_, _error_)
+        * agent will send logs from somes units (cron, `app.py`, backups, and some others) to _Datadog_
+            * password are removed from the log before
+    * `import_package_as_user.py` is now sending log through _systemd_ journal
+    * `pylastic.py` can now use a _logger_ instance from `import_package_as_user.py` in order to send it's log through _systemd_ too
+    * `/var/log/backup_*` files are now rotated, old files goes to `/var/log/backup` folder
+        * if a backup is in progress, log file is not rotated
+        * we can see if a log file have been rotated or not (because a backup is still in progress) in `/var/log/messages` with line tagged `backuplogrotate`
+* [IMPROVEMENT]: now tag are set to _bucket_ and _storage account_ when created
+    * tags `project:jahia_cloud_prod` or `project:jahia_cloud_dev` depending the cluster role
 
 ### v0.6 (2019-07-05)
 * [NEW]: now it's possible to restore backup from another env, cloud provider, region, cluster env, another uid
