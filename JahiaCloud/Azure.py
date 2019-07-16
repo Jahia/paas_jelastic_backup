@@ -103,9 +103,9 @@ class PlayWithIt():
         if self.check_if_sto_acc_exist():
             return False
         if self.env == 'prod':
-            tag = {'product': 'jahia_cloud_prod'}
+            tag = {'project': 'jahia_cloud_prod'}
         else:
-            tag = {'product': 'jahia_cloud_dev'}
+            tag = {'project': 'jahia_cloud_dev'}
         client = self.return_session(StorageManagementClient)
         sto_async_operation = client.storage_accounts.create(
             self.rg, self.sto_account,

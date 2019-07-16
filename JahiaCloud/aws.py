@@ -129,9 +129,9 @@ class PlayWithIt():
                                                   self.region_name}
         # well, back to normal
         if self.env == 'prod':
-            tag = [{'Key': 'product', 'Value': 'jahia_cloud_prod'}]
+            tag = [{'Key': 'project', 'Value': 'jahia_cloud_prod'}]
         else:
-            tag = [{'Key': 'product', 'Value': 'jahia_cloud_dev'}]
+            tag = [{'Key': 'project', 'Value': 'jahia_cloud_dev'}]
         try:
             s3.create_bucket(**args)
             logging.info("Bucket {} is now created in region {}"
