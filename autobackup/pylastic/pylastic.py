@@ -7,6 +7,11 @@ import logging
 
 requests.packages.urllib3.disable_warnings()
 
+# try:
+#     logging = logging.getLogger('jahiacloudbackup')
+# except:
+#     pass
+
 class Jelastic():
     """Instanciate a connexion to Jelastic through is API
        :param hostname: the endpoint to you Jelastic cluster
@@ -40,20 +45,25 @@ class Jelastic():
         self.s.headers = {'User-Agent': 'pylastic/0.1'}
         self.s.verify = False
 
-        logging.info("A new Jelastic object is instancied.")
+        try:
+            self.logging = logging.getLogger('jahiacloudbackup')
+        except:
+            self.logging = logging
+
+        self.logging.info("A new Jelastic object is instancied.")
 
     def signIn(self):
         """Signin to the Jelastic API"""
         url = self.hostname + "/1.0/users/authentication/rest/signin"
         resp = self.s.post(url, data={'login': self.login,
                                         'password': self.password})
-        logging.info("login: {}".format(self.login))
+        self.logging.info("login: {}".format(self.login))
         if json.loads(resp.text)['result'] != 0:
-            logging.error("Cannot authenticate. Code: {}"
+            self.logging.error("Cannot authenticate. Code: {}"
                           .format(str(resp.text)))
             return resp
         else:
-            logging.info("Authentication successful.")
+            self.logging.info("Authentication successful.")
             self.session = json.loads(resp.text)['session']
             self.usersAccountGetUserInfo()
             return self.session
@@ -61,16 +71,16 @@ class Jelastic():
         """Sign out to the Jelastic API"""
         url = self.hostname + "/1.0/users/authentication/rest/signout"
         resp = self.s.post(url, data={'session': self.session})
-        logging.info("logout: {}".format(self.login))
+        self.logging.info("logout: {}".format(self.login))
         if json.loads(resp.text)['result'] != 0:
-            logging.error("Cannot sign out. Code: {}"
+            self.logging.error("Cannot sign out. Code: {}"
                           .format(str(resp.text)))
             return resp
         else:
-            logging.info("Sign out successful.")
+            self.logging.info("Sign out successful.")
             return True
     def getSessionAttribute(self):
-        logging.info("\n\thostname({})\n\tlogin({})\n\tpassword({})\n\tsession({})\n\ttoken({})\n\tuid({})"
+        self.logging.info("\n\thostname({})\n\tlogin({})\n\tpassword({})\n\tsession({})\n\ttoken({})\n\tuid({})"
                      .format(self.hostname,
                              self.login,
                              self.password,
@@ -90,21 +100,21 @@ class Jelastic():
                  }
         package = requests.get(urlpackage)
         if region:
-            logging.info("You specified {} region".format(region))
+            self.logging.info("You specified {} region".format(region))
             payload['region'] = region
         if package.text.find('type: update') >= 0:
-            logging.info("{} is an update package".format(urlpackage))
+            self.logging.info("{} is an update package".format(urlpackage))
             envinfo = self.envControlGetEnvInfo(shortdomain)
             payload['targetAppid'] = envinfo['env']['appid']
         else:
-            logging.info("{} is an install package".format(urlpackage))
+            self.logging.info("{} is an install package".format(urlpackage))
             payload['shortdomain'] = shortdomain
         #print(payload)
         # print(self.usersAccountGetUserInfo())
         resp = self.s.post(url, data=payload)
         print(resp.text)
         if json.loads(resp.text)['result'] != 0:
-            logging.error("Something is wrong. Code: {}"
+            self.logging.error("Something is wrong. Code: {}"
                           .format(str(resp.text)))
             return resp
         else:
@@ -116,7 +126,7 @@ class Jelastic():
         resp = self.s.post(url, data={'session': self.session,
                                         'envName': envname})
         if json.loads(resp.text)['result'] != 0:
-            logging.error("Something is wrong. Code: {}"
+            self.logging.error("Something is wrong. Code: {}"
                           .format(str(resp.text)))
         else:
             return json.loads(resp.text)
@@ -127,7 +137,7 @@ class Jelastic():
         resp = self.s.post(url, data={'session': self.session,
                                         'envName': envname})
         if json.loads(resp.text)['result'] != 0:
-            logging.error("Something is wrong. Code: {}"
+            self.logging.error("Something is wrong. Code: {}"
                           .format(str(resp.text)))
         else:
             return json.loads(resp.text)
@@ -138,7 +148,7 @@ class Jelastic():
                                         'envName': envname,
                                         'nodeId': nodeid})
         if json.loads(resp.text)['result'] != 0:
-            logging.error("Something is wrong. Code: {}"
+            self.logging.error("Something is wrong. Code: {}"
                           .format(str(resp.text)))
         else:
             return json.loads(resp.text)
@@ -148,7 +158,7 @@ class Jelastic():
         resp = self.s.post(url, data={'session': self.session,
                                         'envName': envname})
         if json.loads(resp.text)['result'] != 0:
-            logging.error("Something is wrong. Code: {}"
+            self.logging.error("Something is wrong. Code: {}"
                           .format(str(resp.text)))
         else:
             return json.loads(resp.text)
@@ -157,7 +167,7 @@ class Jelastic():
         url = self.hostname + "/1.0/environment/control/rest/getenvs"
         resp = self.s.post(url, data={'session': self.session})
         if json.loads(resp.text)['result'] != 0:
-            logging.error("Something is wrong. Code: {}"
+            self.logging.error("Something is wrong. Code: {}"
                           .format(str(resp.text)))
         else:
             return json.loads(resp.text)
@@ -168,7 +178,7 @@ class Jelastic():
         resp = self.s.get(url, params={'session': self.session,
                                          'status': '0'})
         if json.loads(resp.text)['result'] != 0:
-            logging.error("Cannot retrieve list of users. Code:"
+            self.logging.error("Cannot retrieve list of users. Code:"
                           + str(resp.text))
         else:
             return json.loads(resp.text)
@@ -179,14 +189,14 @@ class Jelastic():
                                          'login': usermail,
                                          'appid': 'cluster'})
         if json.loads(resp.text)['result'] != 0:
-            logging.error("Cannot sign in as user {}: Code: {}"
+            self.logging.error("Cannot sign in as user {}: Code: {}"
                           .format(usermail, str(resp.text)))
         else:
             if 'session' not in json.loads(resp.text) and n>0:
                 print(resp.text)
-                logging.warning("\nsession: {}\ntoken: {}"
+                self.logging.warning("\nsession: {}\ntoken: {}"
                                 .format(self.session, self.token))
-                logging.warning("Auth problem, retrying {} time..."
+                self.logging.warning("Auth problem, retrying {} time..."
                                 .format(n))
                 self.sysAdminSignAsUser(usermail, n=n-1)
             return json.loads(resp.text)['session']
@@ -198,7 +208,7 @@ class Jelastic():
         resp = self.s.get(url, params={'session': self.session,
                                        'appid': 'cluster'})
         if json.loads(resp.text)['result'] != 0:
-            logging.error("Cannot retrieve current user sessions. Code:"
+            self.logging.error("Cannot retrieve current user sessions. Code:"
                           + str(resp.text))
         else:
             return json.loads(resp.text)
@@ -208,7 +218,7 @@ class Jelastic():
         resp = self.s.get(url, params={'session': self.session,
                                        'appid': 'cluster'})
         if json.loads(resp.text)['result'] != 0:
-            logging.error("Cannot retrieve current user info. Code:"
+            self.logging.error("Cannot retrieve current user info. Code:"
                           + str(resp.text))
         else:
             self.login = json.loads(resp.text)['email']
@@ -221,15 +231,15 @@ class Jelastic():
                                          'session': self.token,
                                          'userHeaders': 'None'})
         if json.loads(resp.text)['result'] != 0:
-            logging.error("Cannot authenticate. Code: {}"
+            self.logging.error("Cannot authenticate. Code: {}"
                           .format(resp.text))
         else:
             if 'session' not in json.loads(resp.text) and n>0:
                 print(resp.text)
-                logging.warning("Auth problem, retrying {} time..."
+                self.logging.warning("Auth problem, retrying {} time..."
                                 .format(n))
                 self.usersAuthSigninByToken(n=n-1)
-            logging.info("Token authentication successful.")
+            self.logging.info("Token authentication successful.")
             self.session = json.loads(resp.text)['session']
             self.usersAccountGetUserInfo()
             return json.loads(resp.text)
