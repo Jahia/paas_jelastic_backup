@@ -3,12 +3,13 @@
 import logging
 import argparse
 import json
+import re
 from pylastic.pylastic import *
+from cysystemd import journal
 
 LOG_FORMAT = "%(asctime)s %(levelname)s: [%(funcName)s] %(message)s"
 logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
 
-logging.info("BACKUP START")
 
 try:
     with open('/metadata_from_HOST', 'r') as f:
@@ -59,6 +60,10 @@ def argparser():
 
 args = argparser()
 
+# logging = logging.getLogger(name=re.split('[@.]', args.sudo)[1])
+logging = logging.getLogger(name='jahiacloudbackup')
+logging.addHandler(journal.JournaldLogHandler(identifier=(args.env)))
+logging.info("BACKUP START")
 
 def importPackage(classname):
     try:
@@ -106,6 +111,6 @@ if adminSess:
     adminSess.signOut()
 r = json.loads(resp.text)
 if r['response']['result'] == 0:
-    logging.info("BACKUP END: the backup package return no error")
+    logging.info("BACKUP END: the backup package return is ok")
 else:
     logging.error("BACKUP END: An error was return by the backup package: {}".format(resp.text))
