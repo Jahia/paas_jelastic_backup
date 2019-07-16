@@ -195,6 +195,7 @@ if __name__ == '__main__':
                 if cloudprovider not in ['aws', 'azure']:
                     exit(1)
                 region = props['JEL_REGION']
+                role = props['JEL_ENV_ROLE']
         except:
             logging.error("A problem occured when reading /metadata_from_HOST file. Exiting")
             exit(1)
@@ -215,13 +216,13 @@ if __name__ == '__main__':
 
     if cloudprovider == 'aws':
         import JahiaCloud.aws as JC
-        cp = JC.PlayWithIt(region_name=region)
+        cp = JC.PlayWithIt(region_name=region, env=role)
     elif cloudprovider== 'azure':
         import JahiaCloud.Azure as JC
         import JahiaCloud.aws as AWS
         cp = JC.PlayWithIt(region_name=region, sto_cont_name=args.backupname,
                            rg=AZ_RG, sto_account=args.bucketname,
-                           authpath=AZ_CRED)
+                           authpath=AZ_CRED, env=role)
         sm = AWS.PlayWithIt(region_name="eu-west-1")
         logging.info("I need to retreive Azure auth_file from Secret Manager")
         secret = json.loads(sm.get_secret('paas_azure_auth_file'))['value']
