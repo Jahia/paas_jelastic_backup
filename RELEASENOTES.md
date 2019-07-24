@@ -1,6 +1,9 @@
 # Backup Package Release notes
 
-## actual version: v1.0
+## actual version: v1.1
+
+### v1.0 (2019-07-24)
+* [IMPROVEMENT]: adding `envname` and `displayname` in metadata if envvar are available
 
 ### v1.0 (2019-07-16)
 * [NEW][IMPROVEMENT]: functionnal `autobackup`

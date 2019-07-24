@@ -131,6 +131,7 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
                      .format(bucket))
         listbackups = {"backups": []}
 
+
     d = {"name": backupname,
          "timestamp": timestamp,
          "mode": mode,
@@ -138,6 +139,15 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
          "product": dx_product,
          "version": dx_version
          }
+
+    try:
+        d['envname'] = os.environ['envName']
+    except:
+        pass
+    try:
+        d['displayName'] = os.environ['displayName']
+    except:
+        pass
 
     listbackups['backups'].append(d)
 
