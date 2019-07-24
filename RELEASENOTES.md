@@ -2,7 +2,7 @@
 
 ## actual version: v1.1
 
-### v1.0 (2019-07-24)
+### v1.1 (2019-07-24)
 * [IMPROVEMENT]: adding `envname` and `displayname` in metadata if envvar are available
 
 ### v1.0 (2019-07-16)
