@@ -102,8 +102,8 @@ def retention(bucket, backupname, to_keep, **kwargs):
                      .format(to_keep, len(folders)))
 
 
-def list_backup(bucket, backupname, **kwargs):
-    metadatakey = "metadata"
+def list_backup(bucket, **kwargs):
+    metadatakey = "{}_backup_metadata.json".format(kwargs['uid'])
     tmpfile = "/tmp/backrest_metadata.tmp"
     try:
         cp.download_file(tmpfile, object_name=metadatakey,
@@ -120,7 +120,7 @@ def list_backup(bucket, backupname, **kwargs):
 
 def add_to_metadata_file(bucket, backupname, timestamp, mode,
                          dx_product, dx_version, **kwargs):
-    metadatakey = "metadata"
+    metadatakey = "{}_backup_metadata.json".format(kwargs['uid'])
     tmpfile = "/tmp/backrest_metadata.tmp"
     folder = "{}_{}_{}".format(backupname, timestamp, mode)
     try:
@@ -138,7 +138,7 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
     d = {"name": backupname,
          "timestamp": timestamp,
          "mode": mode,
-         "size": cp.folder_size(folder, bucket=bucket),
+         "size": cp.folder_size(folder, bucket=kwargs['frombucket']),
          "product": dx_product,
          "version": dx_version,
          "cloudprovider": cloudprovider,
@@ -171,7 +171,7 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
         return False
 
 def remove_from_metadata_file(bucket, backupname, timestamp, **kwargs):
-    metadatakey = "metadata"
+    metadatakey = "{}_backup_metadata.json".format(kwargs['uid'])
     tmpfile = "/tmp/backrest_metadata.tmp"
     try:
         cp.download_file(tmpfile, object_name=metadatakey, bucket=bucket)
@@ -232,6 +232,19 @@ if __name__ == '__main__':
         dx_version = dx_product = 'undefined'
 
 
+    def getuid():
+        try:
+            uid = re.sub(r'^jc(dev|prod)(?P<uid>[0-9]+).*$',
+                         r'\g<uid>',
+                         args.bucketname)
+        except:
+            logging.error("Cannot find UID in bucketname ({})"
+                          .format(args.bucketname))
+            exit(1)
+        return uid
+
+    def setmetabucketname():
+        return "jc{}backupmetadata".format(role)
 
     logging.info("You want to work with {} as cloud provider. Let's go"
                  .format(cloudprovider))
@@ -239,7 +252,7 @@ if __name__ == '__main__':
     if cloudprovider == 'aws':
         import JahiaCloud.aws as JC
         cp = JC.PlayWithIt(region_name=region, env=role)
-    elif cloudprovider== 'azure':
+    elif cloudprovider == 'azure':
         import JahiaCloud.Azure as JC
         import JahiaCloud.aws as AWS
         cp = JC.PlayWithIt(region_name=region, sto_cont_name=args.backupname,
@@ -264,23 +277,21 @@ if __name__ == '__main__':
     elif args.action == 'download':
         download(args.bucketname, object_name, args.file)
     elif args.action == 'addmeta':
-        try:
-            uid = re.sub(r'^jc(dev|prod)(?P<uid>[0-9]+).*$',
-                        r'\g<uid>',
-                        args.bucketname)
-        except:
-            logging.error("Cannot find UID in bucketname ({})"
-                          .format(args.bucketname))
-            exit(1)
-        print(add_to_metadata_file(args.bucketname, args.backupname,
+        uid = getuid()
+        metabucket = setmetabucketname()
+        print(add_to_metadata_file(metabucket, args.backupname,
                                    timestamp, args.mode,
                                    dx_product, dx_version,
                                    displayname=args.displayname,
-                                   uid=uid))
+                                   uid=uid, frombucket=args.bucketname))
     elif args.action == 'delmeta':
-        print(remove_from_metadata_file(args.bucketname, args.backupname,
-                                        timestamp))
+        uid = getuid()
+        metabucket = setmetabucketname()
+        print(remove_from_metadata_file(metabucket, args.backupname,
+                                        timestamp, uid=uid))
     elif args.action == 'list':
-        print(list_backup(args.bucketname, args.backupname))
+        uid = getuid()
+        metabucket = setmetabucketname()
+        print(list_backup(metabucket, uid=uid))
     elif args.action == 'rotate':
         retention(args.bucketname, args.backupname, args.keep)
