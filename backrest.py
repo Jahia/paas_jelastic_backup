@@ -75,6 +75,8 @@ def upload(filename, bucket, object_name, **kwargs):
 
 def retention(bucket, backupname, to_keep, **kwargs):
     f = cp.folder_list(bucket=bucket)
+    metabucket = kwargs['metabucket']
+    uid = kwargs['uid']
     folders = []
     for e in f:  # this is for remove only auto backup for a backupname
         if re.search('{}_.*_auto/?$'.format(backupname), e):
@@ -90,7 +92,8 @@ def retention(bucket, backupname, to_keep, **kwargs):
                   .format(backupname, timestamp))
             logging.info("Removing {} ({} from metadata file)"
                          .format(backupname, timestamp))
-            remove_from_metadata_file(bucket, backupname, timestamp)
+            remove_from_metadata_file(metabucket, backupname, timestamp,
+                                      uid=uid)
             if cp.delete_folder(f, bucket=bucket):
                 logging.info("{}:{} and his content is now deleted"
                              .format(bucket, f))
@@ -294,4 +297,7 @@ if __name__ == '__main__':
         metabucket = setmetabucketname()
         print(list_backup(metabucket, uid=uid))
     elif args.action == 'rotate':
-        retention(args.bucketname, args.backupname, args.keep)
+        uid = getuid()
+        metabucket = setmetabucketname()
+        retention(args.bucketname, args.backupname, args.keep,
+                  metabucket=metabucket, uid=uid)
