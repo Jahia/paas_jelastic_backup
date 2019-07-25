@@ -140,7 +140,10 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
          "mode": mode,
          "size": cp.folder_size(folder, bucket=bucket),
          "product": dx_product,
-         "version": dx_version
+         "version": dx_version,
+         "cloudprovider": cloudprovider,
+         "region": region,
+         "envrole": role
          }
 
     try:
@@ -149,6 +152,10 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
         pass
     try:
         d['displayname'] = kwargs['displayname']
+    except:
+        pass
+    try:
+        d['uid'] = kwargs['uid']
     except:
         pass
 
@@ -224,6 +231,8 @@ if __name__ == '__main__':
     except:
         dx_version = dx_product = 'undefined'
 
+
+
     logging.info("You want to work with {} as cloud provider. Let's go"
                  .format(cloudprovider))
 
@@ -255,10 +264,19 @@ if __name__ == '__main__':
     elif args.action == 'download':
         download(args.bucketname, object_name, args.file)
     elif args.action == 'addmeta':
+        try:
+            uid = re.sub(r'^jc(dev|prod)(?P<uid>[0-9]+).*$',
+                        r'\g<uid>',
+                        args.bucketname)
+        except:
+            logging.error("Cannot find UID in bucketname ({})"
+                          .format(args.bucketname))
+            exit(1)
         print(add_to_metadata_file(args.bucketname, args.backupname,
                                    timestamp, args.mode,
                                    dx_product, dx_version,
-                                   displayname=args.displayname))
+                                   displayname=args.displayname,
+                                   uid=uid))
     elif args.action == 'delmeta':
         print(remove_from_metadata_file(args.bucketname, args.backupname,
                                         timestamp))
