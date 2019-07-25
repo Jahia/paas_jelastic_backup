@@ -2,8 +2,18 @@
 
 ## actual version: v1.1
 
-### v1.1 (2019-07-24)
-* [IMPROVEMENT]: adding `envname` and `displayname` in metadata
+### v1.1 (2019-07-25)
+* [NEW]: new keys in metadata
+    * `envname`
+    * `displayname`
+    * `cloudprovider` (for values `aws` or `azure`)
+    * `region` (for cloudprovider region's name, eg: `eu-west-1`, `centralus`)
+    * `envrole` (does the backup were from `dev` or `prod` Jelastic cluster)
+    * `uid` (owner's uid of the backuped env)
+* [NEW]: change in metadata files logic
+    * now they are 2 buckets in eu-west-1: `jc(prod|dev)backupmetadata`
+    * every Jelastic user will now use *one* file to store his backups metadata
+        * now with one file, we get metadata for all user's backups accross all cloud providers and cloud's regions
 
 ### v1.0 (2019-07-16)
 * [NEW][IMPROVEMENT]: functionnal `autobackup`
