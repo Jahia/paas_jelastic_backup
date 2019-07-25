@@ -49,7 +49,7 @@ onInstall:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
-      - python3 backrest.py -a addmeta --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} ${globals.argTimestamp} -m ${settings.backtype}
+      - python3 backrest.py -a addmeta --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} ${globals.argTimestamp} -m ${settings.backtype} --displayname ${env.displayName}
   - cmd [proc]:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region

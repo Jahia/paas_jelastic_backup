@@ -32,6 +32,9 @@ def argparser():
     parser.add_argument("--backupname",
                         help="the backup name you want to play with",
                         required=False)
+    parser.add_argument("--displayname",
+                        help="the env displayname (for metadata)",
+                        required=False)
     parser.add_argument("-f", "--file",
                         help="the file you want to download or upload",
                         required=False)
@@ -145,7 +148,7 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
     except:
         pass
     try:
-        d['displayName'] = os.environ['displayName']
+        d['displayname'] = kwargs['displayname']
     except:
         pass
 
@@ -240,9 +243,6 @@ if __name__ == '__main__':
         with open(AZ_CRED, 'w') as f:
             f.write(json.dumps(secret, indent=4, sort_keys=True))
 
-    if args.file:
-        print("blablabla {}".format(args.file))
-
     if args.timestamp:
         timestamp = args.timestamp
     else:
@@ -257,7 +257,8 @@ if __name__ == '__main__':
     elif args.action == 'addmeta':
         print(add_to_metadata_file(args.bucketname, args.backupname,
                                    timestamp, args.mode,
-                                   dx_product, dx_version))
+                                   dx_product, dx_version,
+                                   displayname=args.displayname))
     elif args.action == 'delmeta':
         print(remove_from_metadata_file(args.bucketname, args.backupname,
                                         timestamp))
