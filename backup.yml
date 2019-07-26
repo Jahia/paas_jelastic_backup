@@ -64,7 +64,7 @@ actions:
           var m = diso.getMonth() + 1
           var H = diso.getHours()
           var M = diso.getMinutes()
-          var d = diso.getDay()
+          var d = diso.getDate()
           if(m.toString().length != 2) {m = "0" + m}
           if(H.toString().length != 2) {H = "0" + H}
           if(M.toString().length != 2) {M = "0" + M}
