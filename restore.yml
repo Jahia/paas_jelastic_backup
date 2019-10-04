@@ -18,12 +18,12 @@ onInstall:
           - if(settings.envrole_source):
               - if(settings.uid_source):
                   - setGlobals:
-                      bucketname: jc${settings.envrole_source}${settings.uid_source}${globals.wc_region_source} -F ${settings.cloud_source},${settings.region_source}
+                      bucketname: jc${settings.envrole_source}${settings.uid_source}${globals.wc_region_source} -F ${settings.cloud_source},${settings.region_source},${settings.envrole_source}
 
   - if(settings.source_env):
       - envSource
       - setGlobals:
-          bucketname: jc${globals.envRole_source}${env.uid}${globals.region_source} -F ${globals.cloudProvider_source},${globals.regionRealName_source}
+          bucketname: jc${globals.envRole_source}${env.uid}${globals.region_source} -F ${globals.cloudProvider_source},${globals.regionRealName_source},${settings.envrole_source}
   - if(!settings.source_env):
       - if(!settings.envrole_source):
           - setGlobals:

@@ -42,7 +42,7 @@ def argparser():
                         help="how many backup do you want to keep",
                         type=int)
     parser.add_argument("-F", "--foreign",
-                        help="if backup is from another cloud/region, eg: aws,eu-west-1"
+                        help="if backup is from another cloud/region/role, eg: aws,eu-west-1,prod"
                         )
     parser.add_argument("-t", "--timestamp",
                         help="timestamp in format %%Y-%%m-%%dT%%H:%%M:00",
@@ -208,6 +208,7 @@ if __name__ == '__main__':
     if args.foreign:
         cloudprovider = args.foreign.split(',')[0]
         region = args.foreign.split(',')[1]
+        role = args.foreign.split(',')[2]
         logging.info("you specify a foreign env: {} on {}"
                      .format(region, cloudprovider))
     else:
