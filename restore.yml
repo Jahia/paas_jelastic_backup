@@ -79,6 +79,7 @@ onInstall:
           query="mysql -u $DB_USER -p$DB_PASSWORD -h proxysql -e \"select max(revision_id) from JR_J_LOCAL_REVISIONS\""
           opts="-u $DB_USER -p$DB_PASSWORD -h proxysql_2 -e $query jahia"
           ~/paas_jelastic_backup/revisionNode.py -n $(mysql $opts)
+          chown tomcat:tomcat /data/digital-factory-data/repository/revisionNode
         fi
         service tomcat start
 
