@@ -73,8 +73,14 @@ onInstall:
       - case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; *) mysql_host="mysqldb"; esac
       - gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h ${mysql_host} --max_allowed_packet=1024M
       - rm -f jahia.sql.gz
-  - cmd [proc,cp]:
-      - service tomcat start
+  - cmd [proc,cp]: |-
+        if [ $(echo $DX_VERSION | sed 's/\.//g') -lt 7320 ]; then  # revisionNode file is set starting 7.3.2.0
+          case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; *) mysql_host="mysqldb"; esac
+          query="mysql -u $DB_USER -p$DB_PASSWORD -h proxysql -e \"select max(revision_id) from JR_J_LOCAL_REVISIONS\""
+          opts="-u $DB_USER -p$DB_PASSWORD -h proxysql_2 -e $query jahia"
+          ~/paas_jelastic_backup/revisionNode.py -n $(mysql $opts)
+        fi
+        service tomcat start
 
 actions:
   envSource:
