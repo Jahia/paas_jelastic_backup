@@ -2,6 +2,25 @@
 
 ## actual version: v1.1
 
+### v1.2 (2019-10-14)
+* [FIX]: autodetecte database endpoint
+    * since we can use proxsql et multi master mariadb, using old `sqldb` hostname was not working anymore
+    * now the endpoint hostname is automaticaly setted
+* [BUG]: fix foreign restoration
+    * `backrest.py` didn't set `role` variables when launched with foreign option
+        * `role` is now a third arg of `-F`
+    * `restore.yml` is updated to send this new third arg when restore foreign backup
+* [BUG]: fix _config_ files restoration
+    * `/opt/tomcat/conf/digital-factory-config` was not restored because of bads paths in commands
+* [NEW]: faster env restart after restoration
+    * now get the max revision node in table JR_J_LOCAL_REVISIONS in order to create `/data/digital-factory-data/repository/revisionNode` file
+    * `revisionNode.py` is responsible to create this file (wich is a 32bits binary file)
+        * it can also read the binary file and return the decimal value with `-r` if needed
+* [KNOW BUG]: we cannot, for now, accelerate processing launch after a restoration
+    * when trying to set the `revisionNode` file, Jahia complain about rewriteURL/healthcluster
+    * maybe a Jahia's bug
+    * so *only browsing restart* do not need to reindexing all revision, *only processing need it*
+
 ### v1.1 (2019-07-25)
 * [NEW]: new keys in metadata
     * `envname`

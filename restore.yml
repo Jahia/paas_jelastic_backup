@@ -65,6 +65,14 @@ onInstall:
       - sed -i "s|^cluster.node.serverId.*|cluster.node.serverId = $HOSTNAME|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
   - cmd [cp]:
       - sed -i "s|^processingServer.*|processingServer = false|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
+  - cmd [cp]: |-
+        if [ $(echo $DX_VERSION | sed 's/\.//g') -lt 7320 ]; then  # revisionNode file is set starting 7.3.2.0
+          case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; *) mysql_host="mysqldb"; esac
+          query="select max(revision_id) from JR_J_LOCAL_REVISIONS\G"
+          num=$(mysql -u $DB_USER -p$DB_PASSWORD -h $mysql_host -e "$query" jahia | awk '$1~/revision_id/ {print $2}')
+          ~/paas_jelastic_backup/revisionNode.py -n $num
+          chown tomcat:tomcat /data/digital-factory-data/repository/revisionNode
+        fi
   - cmd [proc]:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
@@ -74,15 +82,7 @@ onInstall:
       - gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h ${mysql_host} --max_allowed_packet=1024M
       - rm -f jahia.sql.gz
   - cmd [proc,cp]: |-
-        if [ $(echo $DX_VERSION | sed 's/\.//g') -lt 7320 ]; then  # revisionNode file is set starting 7.3.2.0
-          if [ ! -f /data/digital-factory-data/repository/revisionNode ]; then
-            case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; *) mysql_host="mysqldb"; esac
-            query="select max(revision_id) from JR_J_LOCAL_REVISIONS\G"
-            num=$(mysql -u $DB_USER -p$DB_PASSWORD -h $mysql_host -e "$query" jahia | awk '$1~/revision_id/ {print $2}')
-            ~/paas_jelastic_backup/revisionNode.py -n $num
-            chown tomcat:tomcat /data/digital-factory-data/repository/revisionNode
-          fi
-        fi
+        find /data/digital-factory-data/modules -name "healthcheck-cluster*" -print -delete
         service tomcat start
 
 actions:
