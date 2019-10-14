@@ -4,7 +4,7 @@
 
 ### v1.2 (2019-10-14)
 * [FIX]: autodetecte database endpoint
-    * since we can use proxsql et multi master mariadb, using old `sqldb` hostname was not working anymore
+    * since we can use proxsql and multi master mariadb, using old `sqldb` hostname was not working anymore
     * now the endpoint hostname is automaticaly setted
 * [BUG]: fix foreign restoration
     * `backrest.py` didn't set `role` variables when launched with foreign option
