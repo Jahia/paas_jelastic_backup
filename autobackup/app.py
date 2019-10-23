@@ -16,7 +16,7 @@ LOG_FORMAT = "%(levelname)s: [%(funcName)s] %(message)s"
 logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
 
 
-script = "source /.jelenv && cd / && python3 /import_package_as_user.py -l {login} -p {password} -u '{url}' --settings \"{settings}\" --env {env} --region {region} -s {sudo} >> /var/log/backup_{sudo}-{env}.log 2>&1"
+script = "source /.jelenv && export $(grep MASTER_PWD /.jelenv) && cd / && python3 /import_package_as_user.py -l \"{login}\" -p \"{password}\" -u '{url}' --settings \"{settings}\" --env {env} --region {region} -s \"{sudo}\" >> /var/log/backup_{sudo}-{env}.log 2>&1"
 
 @app.route("/")
 def hello():
