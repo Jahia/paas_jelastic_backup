@@ -15,6 +15,7 @@ globals:
   baseApiUrl: http://localhost:8080/api
   backupUrl: ${baseUrl}/backup.yml
   httpHeader: 'Content-Type: application/json'
+  listjobs: ''
 
 onInstall:
   - initVars
@@ -59,6 +60,11 @@ actions:
   launchCurl:
     - cmd[${this}]: |-
         curl -s -X ${globals.httpMethod} -H '${globals.httpHeader}' '${globals.urlApi}' -d '${globals.data}'
+    - if('${settings.action}' == 'list'):
+        - setGlobals:
+            listjobs: ${response.out}
+
+success: ${globals.listjobs}
 
 settings:
   fields:
