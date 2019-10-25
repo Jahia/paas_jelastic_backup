@@ -44,7 +44,6 @@ actions:
               "url": "${globals.backupUrl}",
               "settings": settings,
               "sudo": "${settings.sudo}",
-              "region": "${settings.region}"
             }
 
             return {'result': 0, 'data': String(data)}
@@ -84,10 +83,6 @@ settings:
             required: true
           - name: envname
             caption: targeted envname
-            type: string
-            required: true
-          - name: region
-            caption: targeted envname's region
             type: string
             required: true
           - name: sudo

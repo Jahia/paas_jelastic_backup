@@ -69,7 +69,6 @@ def importPackage(classname):
     try:
         resp = classname.devScriptEval(urlpackage=args.url,
                                        shortdomain=args.env,
-                                       region=args.region,
                                        settings=json.loads(args.settings))
     except:
         logging.error("BACKUP END: An error was returning during package execution")
