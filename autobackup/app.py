@@ -29,18 +29,22 @@ class HelloWorld(Resource):
 
 class ListCronJobs(Resource):
     def get(self):
-        n = 1
         resp = {}
         crontab = CronTab(user=True)
         for job in crontab:
-            resp['job' + str(n)] = {'command': job.command,
-                                    'minute': job.minute.render(),
-                                    'hour': job.hour.render(),
-                                    'monthday': job.day.render(),
-                                    'month': job.month.render(),
-                                    'weekday': job.dow.render(),
-                                    'comment': job.comment}
-            n += 1
+            comment = job.comment.split(" ")
+            uid = comment[0]
+            shortdomain = comment[1]
+            infos = {'command': job.command,
+                     'minute': job.minute.render(),
+                     'hour': job.hour.render(),
+                     'monthday': job.day.render(),
+                     'month': job.month.render(),
+                     'weekday': job.dow.render(),
+                     'shortDomain': shortdomain}
+            if uid not in resp:
+                resp[uid] = []
+            resp[uid].append(infos)
         return resp
 
 class CronJob(Resource):
