@@ -35,8 +35,7 @@ class ListCronJobs(Resource):
             comment = job.comment.split(" ")
             uid = comment[0]
             shortdomain = comment[1]
-            infos = {'command': job.command,
-                     'minute': job.minute.render(),
+            infos = {'minute': job.minute.render(),
                      'hour': job.hour.render(),
                      'monthday': job.day.render(),
                      'month': job.month.render(),
