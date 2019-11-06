@@ -15,8 +15,8 @@ onInstall:
       - setTimestamp
   - cmd [proc]:
       - sudo yum install -y python36 python36-pip
-      - python3 -m pip install --upgrade pip
-      - python3 -m pip install --upgrade boto3 azure adal
+      - sudo python3 -m pip install --upgrade pip
+      - sudo python3 -m pip install --upgrade boto3 azure adal
       - if [ ! -d ~/.aws ]; then mkdir ~/.aws; fi
       - echo "[default]" > ~/.aws/credentials
       - echo "aws_access_key_id= ${settings.aws_access_key}" >> ~/.aws/credentials
