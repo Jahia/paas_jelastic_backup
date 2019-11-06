@@ -31,8 +31,8 @@ onInstall:
 
   - cmd [proc,cp]:
       - sudo yum install -y python36 python36-pip
-      - python3 -m pip install --upgrade pip
-      - python3 -m pip install --upgrade boto3 azure adal
+      - sudo python3 -m pip install --upgrade pip
+      - sudo python3 -m pip install --upgrade boto3 azure adal
       - if [ ! -d ~/.aws ]; then mkdir ~/.aws; fi
       - echo "[default]" > ~/.aws/credentials
       - echo "aws_access_key_id= ${settings.aws_access_key}" >> ~/.aws/credentials
@@ -40,15 +40,16 @@ onInstall:
       - provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export aws_region
       - echo "region=$aws_region" >> ~/.aws/credentials
       - if [ -d paas_jelastic_backup ]; then rm -fr paas_jelastic_backup; fi; git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git checkout tags/${settings.gittag}; echo
-      - service tomcat stop
+      - sudo service tomcat stop
   - cmd [proc,cp]:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
       - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-data.tar.gz
-      - rm -rf /data
+      - sudo rm -rf /data
+      - sudo mkdir /data
+      - sudo chown tomcat:tomcat /data
       - tar xf digital-factory-data.tar.gz -C /
-      - chown tomcat:tomcat -R /data
       - rm digital-factory-data.tar.gz
   - cmd [proc,cp]:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
@@ -61,7 +62,6 @@ onInstall:
       - rm -f digital-factory-config.tar.gz
       - rm -f /data/digital-factory-data/repository/.lock
       - touch /data/digital-factory-data/safe-env-clone
-      - chown tomcat:tomcat /data/digital-factory-data/safe-env-clone
       - sed -i "s|^cluster.node.serverId.*|cluster.node.serverId = $HOSTNAME|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
   - cmd [cp]:
       - sed -i "s|^processingServer.*|processingServer = false|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
@@ -71,7 +71,6 @@ onInstall:
           query="select max(revision_id) from JR_J_LOCAL_REVISIONS\G"
           num=$(mysql -u $DB_USER -p$DB_PASSWORD -h $mysql_host -e "$query" jahia | awk '$1~/revision_id/ {print $2}')
           ~/paas_jelastic_backup/revisionNode.py -n $num
-          chown tomcat:tomcat /data/digital-factory-data/repository/revisionNode
         fi
   - cmd [proc]:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
@@ -83,7 +82,7 @@ onInstall:
       - rm -f jahia.sql.gz
   - cmd [proc,cp]: |-
         find /data/digital-factory-data/modules -name "healthcheck-cluster*" -print -delete
-        service tomcat start
+        sudo service tomcat start
 
 actions:
   envSource:
