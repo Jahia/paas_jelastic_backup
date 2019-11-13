@@ -63,6 +63,15 @@ onInstall:
       - rm -f /data/digital-factory-data/repository/.lock
       - touch /data/digital-factory-data/safe-env-clone
       - sed -i "s|^cluster.node.serverId.*|cluster.node.serverId = $HOSTNAME|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
+  - if (settings.removeEnvlink && ${settings.removeEnvlink} == false):
+      - log: keep env link
+  - else:
+      - log: remove env link
+      - cmd[proc, cp]: |-
+          rm -f /data/digital-factory-data/karaf/etc/org.jahia.modules.marketingfactory.settings-mf.cfg
+      - environment.control.ApplyNodeGroupData [proc, cp]:
+        data:
+          envLink: ""
   - cmd [cp]:
       - sed -i "s|^processingServer.*|processingServer = false|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
   - cmd [cp]: |-
@@ -186,3 +195,10 @@ settings:
       caption: is this a manual or auto backup
       type: string
       default: manual
+    - name: removeEnvlink
+      type: radiolist
+      caption: Env links
+      values:
+        true: Remove
+        false: Keep
+      default: 1
