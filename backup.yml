@@ -13,7 +13,7 @@ globals:
 onInstall:
   - if('${globals.timestamp}' == ''):
       - setTimestamp
-  - cmd [proc]:
+  - cmd [proc, sqldb]:
       - sudo yum install -y python36 python36-pip
       - sudo python3 -m pip install --upgrade pip
       - sudo python3 -m pip install --upgrade boto3 azure adal
@@ -31,12 +31,11 @@ onInstall:
       - tar -czvf digital-factory-data.tar.gz /data/digital-factory-data/
       - python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz ${globals.argTimestamp} -m ${settings.backtype}
       - rm -f digital-factory-data.tar.gz
-  - cmd [proc]:
+  - cmd [sqldb]:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
-      - cd paas_jelastic_backup
-      - case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; *) mysql_host="mysqldb"; esac
-      - mysqldump --hex-blob --user=$DB_USER --password=$DB_PASSWORD -h ${mysql_host} --single-transaction --max_allowed_packet=1024M --quote-names --opt --databases --compress jahia | gzip > jahia.sql.gz
+      - cd paas_jelastic_backup      
+      - mysqldump --hex-blob --user=$DB_USER --password=$DB_PASS --single-transaction --max_allowed_packet=1024M --quote-names --opt --databases --compress jahia | gzip > jahia.sql.gz
       - python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f jahia.sql.gz ${globals.argTimestamp} -m ${settings.backtype}
       - rm -f jahia.sql.gz
   - cmd [proc]:
