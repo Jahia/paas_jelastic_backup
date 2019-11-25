@@ -46,8 +46,7 @@ onInstall:
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
       - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-data.tar.gz
-      - sudo rm -rf /data
-      - sudo mkdir /data
+      - sudo rm -rf /data/digital-factory-data
       - sudo chown tomcat:tomcat /data
       - tar xf digital-factory-data.tar.gz -C /
       - rm digital-factory-data.tar.gz
@@ -76,7 +75,7 @@ onInstall:
       - sed -i "s|^processingServer.*|processingServer = false|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
   - cmd [cp]: |-
         if [ $(echo $DX_VERSION | sed 's/\.//g') -lt 7320 ]; then  # revisionNode file is set starting 7.3.2.0
-          case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; *) mysql_host="mysqldb"; esac
+          case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; "galera") mysql_host="galera";; *) mysql_host="mysqldb"; esac
           query="select max(revision_id) from JR_J_LOCAL_REVISIONS\G"
           num=$(mysql -u $DB_USER -p$DB_PASSWORD -h $mysql_host -e "$query" jahia | awk '$1~/revision_id/ {print $2}')
           ~/paas_jelastic_backup/revisionNode.py -n $num
@@ -86,7 +85,7 @@ onInstall:
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
       - python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz
-      - case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; *) mysql_host="mysqldb"; esac
+      - case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; "galera") mysql_host="galera";; *) mysql_host="mysqldb"; esac
       - gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h ${mysql_host} --max_allowed_packet=1024M
       - rm -f jahia.sql.gz
   - cmd [proc,cp]: |-
