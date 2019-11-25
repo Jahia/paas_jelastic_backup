@@ -35,7 +35,7 @@ onInstall:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
-      - case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; *) mysql_host="mysqldb"; esac
+      - case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; "galera") mysql_host="galera";; *) mysql_host="mysqldb"; esac
       - mysqldump --hex-blob --user=$DB_USER --password=$DB_PASSWORD -h ${mysql_host} --single-transaction --max_allowed_packet=1024M --quote-names --opt --databases --compress jahia | gzip > jahia.sql.gz
       - python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f jahia.sql.gz ${globals.argTimestamp} -m ${settings.backtype}
       - rm -f jahia.sql.gz
