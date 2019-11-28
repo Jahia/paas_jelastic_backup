@@ -80,6 +80,10 @@ onInstall:
           num=$(mysql -u $DB_USER -p$DB_PASSWORD -h $mysql_host -e "$query" jahia | awk '$1~/revision_id/ {print $2}')
           ~/paas_jelastic_backup/revisionNode.py -n $num
         fi
+  - log: "## TEMPORARY FIX FOR RESTORATION: GRANT ALL ON *.* TO JAHIA'S DB USER"
+  - cmd[${nodes.sqldb.master.id}]:
+      - mysql -e "GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'%'"
+    user: mysql
   - cmd [proc]:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
@@ -88,9 +92,20 @@ onInstall:
       - case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; "galera") mysql_host="galera";; *) mysql_host="mysqldb"; esac
       - gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h ${mysql_host} --max_allowed_packet=1024M
       - rm -f jahia.sql.gz
+  - log: "## TEMPORARY FIX FOR RESTORATION: REVOKE ALL ON *.* TO JAHIA'S DB USER"
+  - cmd[${nodes.sqldb.master.id}]:
+      - mysql -e "REVOKE ALL PRIVILEGES ON *.* FROM '$DB_USER'@'%'"
+    user: mysql
   - cmd [proc,cp]: |-
         find /data/digital-factory-data/modules -name "healthcheck-cluster*" -print -delete
-        sudo service tomcat start
+  - cmd [proc]:
+      - sudo service tomcat start
+  - log: "## Waiting a bit before starting browsing's tomcat"
+  - sleep:
+      - milliseconds: 120000
+  - cmd [cp]:
+      - sudo service tomcat start
+
 
 actions:
   envSource:
