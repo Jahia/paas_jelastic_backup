@@ -109,7 +109,7 @@ def list_backup(bucket, **kwargs):
     metadatakey = "{}_backup_metadata.json".format(kwargs['uid'])
     tmpfile = "/tmp/backrest_metadata.tmp"
     try:
-        cp.download_file(tmpfile, object_name=metadatakey,
+        aws_sm_md.download_file(tmpfile, object_name=metadatakey,
                          bucket=bucket, quiet=True)
         logging.info("The metadata file have been downloaded from {}"
                      .format(bucket))
@@ -127,7 +127,7 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
     tmpfile = "/tmp/backrest_metadata.tmp"
     folder = "{}_{}_{}".format(backupname, timestamp, mode)
     try:
-        cp.download_file(tmpfile, object_name=metadatakey, bucket=bucket)
+        aws_sm_md.download_file(tmpfile, object_name=metadatakey, bucket=bucket)
         logging.info("A existing metadata file have been downloaded from {}"
                      .format(bucket))
         with open(tmpfile, 'r') as f:
@@ -168,7 +168,7 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
         tmp.write(json.dumps(listbackups, indent=2, sort_keys=True))
 
     try:
-        cp.upload_file(tmpfile, bucket=bucket, object_name=metadatakey)
+        aws_sm_md.upload_file(tmpfile, bucket=bucket, object_name=metadatakey)
         return True
     except:
         return False
@@ -177,7 +177,7 @@ def remove_from_metadata_file(bucket, backupname, timestamp, **kwargs):
     metadatakey = "{}_backup_metadata.json".format(kwargs['uid'])
     tmpfile = "/tmp/backrest_metadata.tmp"
     try:
-        cp.download_file(tmpfile, object_name=metadatakey, bucket=bucket)
+        aws_sm_md.download_file(tmpfile, object_name=metadatakey, bucket=bucket)
         logging.info("A existing metadata file have been downloaded from {}"
                      .format(bucket))
         with open(tmpfile, 'r') as f:
@@ -195,7 +195,7 @@ def remove_from_metadata_file(bucket, backupname, timestamp, **kwargs):
         tmp.write(json.dumps(listbackups, indent=2, sort_keys=True))
 
     try:
-        cp.upload_file(tmpfile, bucket=bucket, object_name=metadatakey)
+        aws_sm_md.upload_file(tmpfile, bucket=bucket, object_name=metadatakey)
         return True
     except:
         return False
@@ -252,23 +252,21 @@ if __name__ == '__main__':
 
     logging.info("You want to work with {} as cloud provider. Let's go"
                  .format(cloudprovider))
-
+    import JahiaCloud.aws as AWS
+    aws_sm_md = AWS.PlayWithIt(region_name="eu-west-1")
     if cloudprovider == 'aws':
         import JahiaCloud.aws as JC
         cp = JC.PlayWithIt(region_name=region, env=role)
     elif cloudprovider == 'azure':
         import JahiaCloud.Azure as JC
-        import JahiaCloud.aws as AWS
         cp = JC.PlayWithIt(region_name=region, sto_cont_name=args.backupname,
                            rg=AZ_RG, sto_account=args.bucketname,
                            authpath=AZ_CRED, env=role)
-        sm = AWS.PlayWithIt(region_name="eu-west-1")
         logging.info("I need to retreive Azure auth_file from Secret Manager")
-        secret = json.loads(sm.get_secret('paas_azure_auth_file'))['value']
+        secret = json.loads(aws_sm_md.get_secret('paas_azure_auth_file'))['value']
         secret = json.loads(secret)
         with open(AZ_CRED, 'w') as f:
             f.write(json.dumps(secret, indent=4, sort_keys=True))
-
     if args.timestamp:
         timestamp = args.timestamp
     else:
