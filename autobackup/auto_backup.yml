@@ -7,7 +7,7 @@ id: jahia-cloud-scheduled-backup
 description:
   short: Jahia Cloud - Scheduled backup
   text: blabla bla
-baseUrl: https://github.com/Jahia/paas_jelastic_backup/raw/v1.1/autobackup
+
 ssl: true
 skipNodeEmails: true
 

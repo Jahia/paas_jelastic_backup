@@ -4,10 +4,17 @@ version: 1.5
 name: Jahia - List backup in bucket
 logo: /images/jahia-logo-70x70.png
 id: jahia-list-from-bucket
-baseUrl: https://raw.githubusercontent.com/Jahia/paas_jelastic_backup
-
 
 onInstall:
+  - script: |-
+      var url = "${baseUrl}".split('/');
+      url.pop();
+      branch = url.pop();
+      url[2] = "github.com"; // Remove raw github domain
+      return {result: 0, "branch": branch, "git-repos-url": url.join('/')};
+  - setGlobals:
+      branch: ${response.branch}
+      git-repos-url: ${response.git-repos-url}
   - cmd [proc]:
       - sudo yum install -y python36 python36-pip
       - python3 -m pip install --upgrade pip
@@ -18,7 +25,7 @@ onInstall:
       - echo "aws_secret_access_key = ${settings.aws_secret_key}" >> ~/.aws/credentials
       - provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export aws_region
       - echo "region=$aws_region" >> ~/.aws/credentials
-      - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git pull --rebase; git checkout tags/${settings.gittag}; echo; else git clone ${settings.gitrepo}; cd paas_jelastic_backup; git checkout ${settings.gitbranch}; git checkout tags/${settings.gittag}; echo; fi
+      - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git fetch --tags --force; git checkout ${globals.branch}; git pull; echo; else git clone ${globals.git-repos-url}; cd paas_jelastic_backup; git checkout ${globals.branch}; echo; fi
   - cmd [proc]:
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
@@ -45,18 +52,3 @@ settings:
       type: string
       required: true
       default: prod
-    - name: gitrepo
-      caption: backrest git repo url
-      type: string
-      default: https://github.com/Jahia/paas_jelastic_backup.git
-      inputType: hidden
-    - name: gitbranch
-      caption: git repo branch to use
-      default: master
-      type: string
-      inputType: hidden
-    - name: gittag
-      caption: git tag branch to use
-      default: v1.2
-      type: string
-      inputType: hidden
