@@ -7,13 +7,11 @@ id: jahia-cloud-control-scheduled-backup
 description:
   short: Jahia Cloud - Control Scheduled backup
   text: This package is use to interact with the auto_backup.yml node.
-baseUrl: https://github.com/Jahia/paas_jelastic_backup/raw/master
 ssl: true
 skipNodeEmails: true
 
 globals:
   baseApiUrl: http://localhost:8080/api
-  backupUrl: ${baseUrl}/backup.yml
   httpHeader: 'Content-Type: application/json'
   listjobs: ''
 
@@ -22,6 +20,13 @@ onInstall:
   - launchCurl: cp
 
 actions:
+    - script: |-
+      var newUrl = "${baseUrl}".split('/')
+      newUrl.pop();
+      newUrl.pop();
+      return {result: 0, "backup_url": newUrl.join('/')};
+  - setGlobals:
+      backup_url: ${response.backup_url}
   initVars:
     - if('${settings.action}' == 'list'):
         setGlobals:
@@ -41,7 +46,7 @@ actions:
               "schedule": "${settings.schedule}",
               "uid": "${settings.uid}",
               "envname": "${settings.envname}",
-              "url": "${globals.backupUrl}",
+              "url": "${globals.backupUrl}/backup.yml",
               "settings": settings,
               "sudo": "${settings.sudo}",
             }
