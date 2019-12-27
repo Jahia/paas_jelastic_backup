@@ -28,11 +28,12 @@ onInstall:
               bucketname: jc${cluster_role}${env.uid}${env_region}
 
   - script: |-
-      var url = "${baseUrl}".split('/');
-      url.pop();
-      branch = url.pop();
-      url[2] = "github.com"; // Remove raw github domain
-      return {result: 0, "branch": branch, "git-repos-url": url.join('/')};
+      var url = "${baseUrl}"
+      expr_repo = /(Jahia\/.*?\/)/
+      expr_branch = /.+\/(.+)\/$/
+      repo_url = "https://github.com/" + url.match(expr_repo)[1]
+      branch_url = url.match(expr_branch)[1]
+      return {"result": 0, "branch": branch_url, "git-repos-url": repo_url}
   - setGlobals:
       branch: ${response.branch}
       git-repos-url: ${response.git-repos-url}
