@@ -259,7 +259,7 @@ if __name__ == '__main__':
         cp = JC.PlayWithIt(region_name=region, env=role)
     elif cloudprovider == 'azure':
         import JahiaCloud.Azure as JC
-        cp = JC.PlayWithIt(region_name=region, sto_cont_name=args.backupname,
+        cp = JC.PlayWithIt(region_name=region, sto_cont_name=args.backupname.lower(),
                            rg=AZ_RG, sto_account=args.bucketname,
                            authpath=AZ_CRED, env=role)
         logging.info("I need to retreive Azure auth_file from Secret Manager")
