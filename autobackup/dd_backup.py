@@ -40,9 +40,9 @@ class CheckBackup(AgentCheck):
             filemtime = int(str(os.stat('/var/log/' + f).st_mtime).split('.')[0])
 
             # f like backup_user@domain_envname.log
-            binfo = re.split('[-_@.]', f[:-4])
-            envCustomer = binfo[2]
-            envName = binfo[4]
+            f1=re.sub("(^backup_|\.log$)", "", f)
+            envCustomer=re.sub(r"(^.+@.+\..[a-z]+)-.+$", r"\1", f1, re.IGNORECASE)
+            envName=re.sub(r"(^.+@.+\..[a-z]+)-(.+$)", r"\2", f1, re.IGNORECASE)
             tags = ['customer:' + envCustomer,
                     'envname:' + envName,
                     'service:' + envName]
