@@ -66,6 +66,8 @@ onInstall:
       - cd paas_jelastic_backup
       - python3 backrest.py -a rotate --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} ${globals.argTimestamp} -m ${settings.backtype} -k ${settings.retention}
 
+  - cmd [proc]:
+      - rm /opt/tomcat/temp/.aws/credentials
 
 actions:
   setTimestamp:

@@ -33,6 +33,8 @@ onInstall:
       - python3 backrest.py -a list --bucketname jc${cluster_role}${env.uid}${env_region}
   - setGlobals:
       cmdOutput: ${response.out}
+  - cmd [proc]:
+      - rm /opt/tomcat/temp/.aws/credentials
 
 success: ${globals.cmdOutput}
 
