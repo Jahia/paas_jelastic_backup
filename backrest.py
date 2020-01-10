@@ -257,7 +257,7 @@ if __name__ == '__main__':
     if cloudprovider == 'aws':
         import JahiaCloud.aws as JC
         cp = JC.PlayWithIt(region_name=region, env=role)
-    elif cloudprovider == 'azure':
+    elif cloudprovider == 'azure' and args.action != 'list':
         import JahiaCloud.Azure as JC
         cp = JC.PlayWithIt(region_name=region, sto_cont_name=args.backupname.lower(),
                            rg=AZ_RG, sto_account=args.bucketname,
