@@ -300,3 +300,5 @@ if __name__ == '__main__':
         metabucket = setmetabucketname()
         retention(args.bucketname, args.backupname, args.keep,
                   metabucket=metabucket, uid=uid)
+    if os.path.exists(AZ_CRED):
+       os.remove(AZ_CRED)

@@ -115,6 +115,9 @@ onInstall:
   - cmd [cp]:
       - sudo service tomcat start
 
+  - cmd [proc,cp]:
+      - rm /opt/tomcat/temp/.aws/credentials
+
 
 actions:
   envSource:
