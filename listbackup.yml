@@ -7,18 +7,19 @@ id: jahia-list-from-bucket
 
 onInstall:
   - script: |-
-      var url = "${baseUrl}".split('/');
-      url.pop();
-      branch = url.pop();
-      url[2] = "github.com"; // Remove raw github domain
-      return {result: 0, "branch": branch, "git-repos-url": url.join('/')};
+      var url = "${baseUrl}"
+      expr_repo = /(Jahia\/.*?\/)/
+      expr_branch = /.+\/(.+)\/$/
+      repo_url = "https://github.com/" + url.match(expr_repo)[1]
+      branch_url = url.match(expr_branch)[1]
+      return {"result": 0, "branch": branch_url, "git-repos-url": repo_url}
   - setGlobals:
       branch: ${response.branch}
       git-repos-url: ${response.git-repos-url}
   - cmd [proc]:
       - sudo yum install -y python36 python36-pip
-      - python3 -m pip install --upgrade pip
-      - python3 -m pip install --upgrade boto3 azure adal
+      - sudo python3 -m pip install --upgrade pip
+      - sudo python3 -m pip install --upgrade boto3 azure adal
       - if [ ! -d ~/.aws ]; then mkdir ~/.aws; fi
       - echo "[default]" > ~/.aws/credentials
       - echo "aws_access_key_id= ${settings.aws_access_key}" >> ~/.aws/credentials
