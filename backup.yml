@@ -26,14 +26,10 @@ onInstall:
       - sudo yum install -y python36 python36-pip
       - sudo python3 -m pip install --upgrade pip
       - sudo python3 -m pip install --upgrade boto3 azure adal
-      - if [ ! -d ~/.aws ]; then mkdir ~/.aws; fi
-      - echo "[default]" > ~/.aws/credentials
-      - echo "aws_access_key_id= ${settings.aws_access_key}" >> ~/.aws/credentials
-      - echo "aws_secret_access_key = ${settings.aws_secret_key}" >> ~/.aws/credentials
-      - provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export aws_region
-      - echo "region=$aws_region" >> ~/.aws/credentials
       - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git fetch --tags --force; git checkout ${globals.branch}; git pull; echo; else git clone ${globals.git-repos-url}; cd paas_jelastic_backup; git checkout ${globals.branch}; echo; fi
   - cmd [proc]:
+      - export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+      - provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
@@ -41,6 +37,8 @@ onInstall:
       - python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz ${globals.argTimestamp} -m ${settings.backtype}
       - rm -f digital-factory-data.tar.gz
   - cmd [proc]:
+      - export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+      - provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
@@ -49,6 +47,8 @@ onInstall:
       - python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f jahia.sql.gz ${globals.argTimestamp} -m ${settings.backtype}
       - rm -f jahia.sql.gz
   - cmd [proc]:
+      - export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+      - provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
@@ -56,18 +56,19 @@ onInstall:
       - python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz ${globals.argTimestamp} -m ${settings.backtype}
       - rm -f digital-factory-config.tar.gz
   - cmd [proc]:
+      - export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+      - provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
       - python3 backrest.py -a addmeta --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} ${globals.argTimestamp} -m ${settings.backtype} --displayname '${env.displayName}'
   - cmd [proc]:
+      - export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+      - provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
       - env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
       - cd paas_jelastic_backup
       - python3 backrest.py -a rotate --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} ${globals.argTimestamp} -m ${settings.backtype} -k ${settings.retention}
-
-  - cmd [proc]:
-      - rm /opt/tomcat/temp/.aws/credentials
 
 actions:
   setTimestamp:
