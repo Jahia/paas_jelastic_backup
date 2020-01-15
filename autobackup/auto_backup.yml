@@ -13,7 +13,7 @@ skipNodeEmails: true
 
 
 nodes:
-  - image: jahia/paas_autobackup:v1.1
+  - image: jahia/paas_autobackup:v1.3
     displayName: Scheduled backup
     count: 1
     cloudlets: 5
