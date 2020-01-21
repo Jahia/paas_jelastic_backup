@@ -5,6 +5,9 @@ name: Jahia - Restores an environment from a bucket
 logo: /images/jahia-logo-70x70.png
 id: jahia-restore-from-bucket
 
+mixins:
+  - mixins/common-backup-actions.yml
+
 onInstall:
   - if(settings.cloud_source):
       - if(settings.region_source):
@@ -38,14 +41,13 @@ onInstall:
       branch: ${response.branch}
       git-repos-url: ${response.git-repos-url}
 
-  - cmd [proc,cp]:
-      - sudo yum install -y python36 python36-pip
-      - sudo python3 -m pip install --upgrade pip
-      - sudo python3 -m pip install --upgrade boto3 azure adal
-      - if [ ! -d ~/.aws ]; then mkdir ~/.aws; fi
-      - if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git fetch --tags --force; git checkout ${globals.branch}; git pull; echo; else git clone ${globals.git-repos-url}; cd paas_jelastic_backup; git checkout ${globals.branch}; echo; fi
+  - installBackupTools: proc,cp
+  - restoreJahia
+
+actions:
+  restoreJahia
+    cmd [proc,cp]:
       - sudo service tomcat stop
-  - cmd [proc,cp]:
       - export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
       - provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
       - cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
