@@ -1,0 +1,86 @@
+---
+actions:
+  backupElasticsearch:
+    - cmd[${nodes.es.first.id}]: |-
+        awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST
+    - setGlobals:
+        provider: ${response.out}
+
+    # Configure backup depending on cloud provider
+    - if ("${globals.provider}" == "aws"):
+        - cmd[${nodes.es.first.id}]: |-
+            cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
+            env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
+            region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); export region
+            #Create backup repository
+            curl -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository?verify=false&pretty" -d"
+              {
+                \"type\": \"s3\",
+                \"settings\": {
+                    \"bucket\": \"jc${cluster_role}${env.uid}${env_region}\",
+                    \"region\": \"$region\",
+                    \"access_key\": \"${settings.aws_access_key}\",
+                    \"secret_key\": \"${settings.aws_secret_key}\",
+                    \"base_path\" : \"${settings.backup_name}\"
+                }
+              }"
+    - else:
+        - checkAzureElasticsearchConfig
+        - cmd[${nodes.es.first.id}]: |-
+            cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
+            env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
+            region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); export region
+            curl -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository?verify=false&pretty" -d"
+              {
+                \"type\": \"azure\",
+                \"settings\": {
+                    \"container\": \"${settings.backup_name}\",
+                    \"base_path\" : \"elasticsearch\"
+                }
+              }"
+    # start backup
+    - cmd[${nodes.es.first.id}]: |-
+        timestamp=$(echo "${globals.timestamp}"| awk '{print tolower($0)}')
+        curl -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository/${timestamp}_${settings.backtype}?wait_for_completion=true"
+
+  # Need two functions because it try multiple times to get cmd output in if (and it's the way works...)
+  checkAzureElasticsearchConfig:
+    - cmd[${nodes.es.first.id}]: |-
+        grep azure_account /etc/elasticsearch/elasticsearch.yml || true
+    - if ("${response.out}" == ""):
+        - setAzureElasticsearchConfig
+
+  setAzureElasticsearchConfig:
+    # Create azure storage account and container if not existing. Then get azure storage accound creds
+    - cmd[${nodes.es.first.id}]: |-
+        cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
+        env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
+        region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); export region
+        cd paas_jelastic_backup
+        python3 elasticsearch-azure.py --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name}
+    - cmd[${nodes.es.first.id}]: |-
+        cat /tmp/azurecred
+        rm /tmp/azurecred
+    - setGlobals:
+        azure_secret: ${response.out}
+    - if ("${global.azure_secret}" == ""):
+        - return:
+            type: error
+            message: "An error occured when fetching elasticsearch config."
+
+    - forEach(nodes.es):
+        cmd[${@i.id}]: |-
+          cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
+          env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
+          region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); export region
+          cat <<EOF >> /etc/elasticsearch/elasticsearch.yml
+          cloud:
+            azure:
+              storage:
+                azure_account:
+                  default: true
+                  account: jc${cluster_role}${env.uid}${env_region}
+                  key: ${globals.azure_secret}
+          EOF
+          service elasticsearch restart
+          sleep 30

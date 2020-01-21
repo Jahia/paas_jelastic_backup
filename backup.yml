@@ -11,6 +11,7 @@ globals:
 
 mixins:
   - mixins/common-backup-actions.yml
+  - mixins/elasticsearch.yml
 
 onInstall:
   - script: |-
@@ -23,14 +24,20 @@ onInstall:
   - setGlobals:
       branch: ${response.branch}
       git-repos-url: ${response.git-repos-url}
+
   - if('${globals.timestamp}' == ''):
       - setTimestamp
 
-  - installBackupTools: proc
-  - backupGalera
-  - backupJahia
-  - addMetadata: proc
-  - rotateBackups: proc
+  - if (nodes.proc):  # Jahia
+      - installBackupTools: proc
+      - backupGalera
+      - backupJahia
+      - addMetadata: proc
+      - rotateBackups: proc
+  - else:  # Jcustomer
+      - installBackupTools: ${nodes.es.first.id}
+      - backupElasticsearch
+      - addMetadata: ${nodes.es.first.id}
 
 actions:
   setTimestamp:
