@@ -145,7 +145,7 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
     if product == 'dx':
         size = cp.folder_size(folder, bucket=kwargs['frombucket'])
     else:
-        size = 0
+        size = 1
 
     d = {"name": backupname,
          "timestamp": timestamp,
