@@ -38,6 +38,7 @@ onInstall:
       - installBackupTools: ${nodes.es.first.id}
       - backupElasticsearch
       - addMetadata: ${nodes.es.first.id}
+      - rotateElasticsearchBackup
 
 actions:
   setTimestamp:
