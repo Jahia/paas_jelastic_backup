@@ -13,7 +13,8 @@ actions:
     - if ("${globals.cloudProvider_source}" == "aws"):
         - setAwsSnapshotRepository
     - else:
-        - setAzureElasticsearchConfig
+        - setAzureElasticsearchConfig:
+            operation: "restore"
         - setAzureSnapshotRepository
 
     - cmd[${nodes.es.first.id}]: |-
@@ -51,9 +52,15 @@ actions:
 
     # Configure backup depending on cloud provider
     - if ("${globals.provider}" == "aws"):
+        - cmd[${nodes.es.first.id}]: |-
+            # Create the bucket if doesn't exists
+            export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+            cd paas_jelastic_backup
+            python3 elasticsearch.py --bucketname ${globals.account} --backupname ${settings.backup_name} --cloudprovider=aws --operation=backup
         - setAwsSnapshotRepository
     - else:
-        - setAzureElasticsearchConfig
+        - setAzureElasticsearchConfig:
+            operation: "backup"
         - setAzureSnapshotRepository
 
     # start backup
@@ -107,7 +114,8 @@ actions:
         grep "${globals.account}" /etc/elasticsearch/elasticsearch.yml || true
     - if ("${response.out}" == ""):  # If we need to use a different account
         # Done in a function because of the if... it's the way it works !
-        - getAzureSecret
+        - getAzureSecret:
+            operation: "${this.operation}"
         # Set azure credentials and restart ES
         - forEach(nodes.es):
             cmd[${@i.id}]: |-
@@ -120,7 +128,7 @@ actions:
     - cmd[${nodes.es.first.id}]: |-
         export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
         cd paas_jelastic_backup
-        python3 elasticsearch.py --bucketname ${globals.account} --backupname ${settings.backup_name}
+        python3 elasticsearch.py --bucketname ${globals.account} --backupname ${settings.backup_name} --cloudprovider=azure --operation=${this.operation}
     - cmd[${nodes.es.first.id}]: |-
         cat /tmp/azurecred
         rm -f /tmp/azurecred
