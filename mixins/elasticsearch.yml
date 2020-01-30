@@ -1,0 +1,173 @@
+---
+actions:
+  restoreElasticsearch:
+    - script: |-
+        // Extract only bucketname in case of foreign restore
+        var account="${globals.bucketname}";
+        account=account.split(" ")[0];
+        return {'result': 0,'account': account}
+    - setGlobals:
+        account: ${response.account}
+        region: ${globals.regionRealName_source}
+
+    - if ("${globals.cloudProvider_source}" == "aws"):
+        - setAwsSnapshotRepository
+    - else:
+        - setAzureElasticsearchConfig:
+            operation: "restore"
+        - setAzureSnapshotRepository
+
+    - cmd[${nodes.es.first.id}]: |-
+        curl -o /dev/null -X DELETE http://${nodes.es.first.intIP}:9200/_all
+        timestamp=$(echo "${settings.timestamp}"| awk '{print tolower($0)}')
+        curl -o /tmp/restore-res  -XPOST "${nodes.es.first.intIP}:9200/_snapshot/backup_repository/${timestamp}_${settings.backtype}/_restore"
+        return_code=$?
+        error=$(grep error /tmp/restore-res)
+        res=$(wc -l<<<$error)
+        if [ $return_code -ne 00 ] || [ ! -z "$res" ];then echo "$error";fi
+        rm -f /tmp/restore-res
+    - if ("${response.out}" != ""):
+        - return:
+            type: error
+            message: "An error occured during the backup restore process."
+
+    - updateElasticsearchReplicas
+
+  backupElasticsearch:
+    - cmd[${nodes.es.first.id}]: |-
+        cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST)
+        env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g')
+        echo jc${cluster_role}${env.uid}${env_region}
+    - setGlobals:
+        account: ${response.out}
+    - cmd[${nodes.es.first.id}]: |-
+        awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST
+    - setGlobals:
+        region: ${response.out}
+
+    - cmd[${nodes.es.first.id}]: |-
+        awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST
+    - setGlobals:
+        provider: ${response.out}
+
+    # Configure backup depending on cloud provider
+    - if ("${globals.provider}" == "aws"):
+        - cmd[${nodes.es.first.id}]: |-
+            # Create the bucket if doesn't exists
+            export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+            cd paas_jelastic_backup
+            python3 elasticsearch.py --bucketname ${globals.account} --backupname ${settings.backup_name} --cloudprovider=aws --operation=backup
+        - setAwsSnapshotRepository
+    - else:
+        - setAzureElasticsearchConfig:
+            operation: "backup"
+        - setAzureSnapshotRepository
+
+    # start backup
+    - cmd[${nodes.es.first.id}]: |-
+        timestamp=$(echo "${globals.timestamp}"| awk '{print tolower($0)}')
+        curl -o /tmp/backup-res -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository/${timestamp}_${settings.backtype}?wait_for_completion=true"
+        return_code=$?
+        error=$(grep error /tmp/backup-res)
+        res=$(wc -l<<<$error)
+        if [ $return_code -ne 00 ] || [ ! -z "$res" ];then echo "$error";fi
+        rm -f /tmp/backup-res
+    - if ("${response.out}" != ""):
+        - return:
+            type: error
+            message: "An error occured during the backup process."
+
+  setAwsSnapshotRepository:
+    - cmd[${nodes.es.first.id}]: |-
+        curl -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository?verify=false&pretty" -d"
+          {
+            \"type\": \"s3\",
+            \"settings\": {
+                \"bucket\": \"${globals.account}\",
+                \"region\": \"${globals.region}\",
+                \"access_key\": \"${settings.aws_access_key}\",
+                \"secret_key\": \"${settings.aws_secret_key}\",
+                \"base_path\" : \"${settings.backup_name}/elasticsearch\"
+            }
+          }"
+
+  setAzureSnapshotRepository:
+    - cmd[${nodes.es.first.id}]: |-
+        curl -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository?verify=false&pretty" -d"
+          {
+            \"type\": \"azure\",
+            \"settings\": {
+                \"container\": \"${settings.backup_name}\",
+                \"base_path\" : \"elasticsearch\"
+            }
+          }"
+
+  setAzureElasticsearchConfig:
+    - cmd[${nodes.es.first.id}]: |-
+        grep azure_storage_user /etc/elasticsearch/elasticsearch.yml || true
+    - if ("${response.out}" == ""):  # If azure config is not set
+        forEach(nodes.es):
+          cmd[${@i.id}]: |-
+            echo -e "cloud:\n  azure:\n    storage:\n      azure_storage_user:" >> /etc/elasticsearch/elasticsearch.yml
+            echo -e "        default: true\n        account: placeholder\n        key: placeholder" >> /etc/elasticsearch/elasticsearch.yml
+    - cmd[${nodes.es.first.id}]: |-
+        grep "${globals.account}" /etc/elasticsearch/elasticsearch.yml || true
+    - if ("${response.out}" == ""):  # If we need to use a different account
+        # Done in a function because of the if... it's the way it works !
+        - getAzureSecret:
+            operation: "${this.operation}"
+        # Set azure credentials and restart ES
+        - forEach(nodes.es):
+            cmd[${@i.id}]: |-
+              sed -i 's#\(^.*account\:\).*#\1 ${globals.account}#g' /etc/elasticsearch/elasticsearch.yml
+              sed -i 's#\(^.*key\:\).*#\1 ${globals.azure_secret}#g' /etc/elasticsearch/elasticsearch.yml
+              service elasticsearch restart
+              sleep 30
+
+  getAzureSecret:
+    - cmd[${nodes.es.first.id}]: |-
+        export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+        cd paas_jelastic_backup
+        python3 elasticsearch.py --bucketname ${globals.account} --backupname ${settings.backup_name} --cloudprovider=azure --operation=${this.operation}
+    - cmd[${nodes.es.first.id}]: |-
+        cat /tmp/azurecred
+        rm -f /tmp/azurecred
+    - setGlobals:
+        azure_secret: "${response.out}"
+    - if ("${globals.azure_secret}" == ""):
+        - return:
+            type: error
+            message: "An error occured during backup repository configuration."
+
+  updateElasticsearchReplicas:
+    - if(nodes.es.length > 1):
+        - if(nodes.es.length > 4):
+            - setGlobals:
+                - replica: 2
+        - else:
+            - setGlobals:
+                - replica: 1
+    - else:
+        setGlobals:
+          - replica: 0
+    - cmd[${nodes.es.first.id}]: |-
+        curl -s http://$(hostname):9200/_cat/shards | awk '{print $1}' | sort | uniq | while read index; do
+            curl -s -XPUT http://$(hostname):9200/$(echo $index)/_settings -d '{"index":{"number_of_replicas": ${globals.replica} }}'
+        done
+
+  rotateElasticsearchBackup:
+    - cmd[${nodes.es.first.id}]: |-
+        export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+        cd paas_jelastic_backup
+        # filter and format snapshot list
+        snapshots=$(curl -s $(hostname):9200/_snapshot/backup_repository/_all?pretty |grep "\"snapshot\"" | grep "${settings.backtype}" |awk '{ print substr($3,2,length($3)-3)}' )
+        delete_count=$(( $(wc -l<<<"$snapshots") - ${settings.retention} ))
+        snapshots_to_delete=$(head -n $delete_count <<<"$snapshots")
+        for snapshot in $snapshots_to_delete;  do
+          timestamp=$(echo $snapshot |awk '{print toupper(substr($0,0,19))}')
+          python3 backrest.py -a delmeta --bucketname ${globals.account} --backupname ${settings.backup_name} -t $timestamp
+          if [ $? -eq 0 ]; then
+            curl -XDELETE "$(hostname):9200/_snapshot/backup_repository/$snapshot"
+            echo "snapshot $snapshot deleted"
+          fi
+        done

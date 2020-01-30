@@ -122,10 +122,15 @@ def list_backup(bucket, **kwargs):
 
 
 def add_to_metadata_file(bucket, backupname, timestamp, mode,
-                         dx_product, dx_version, **kwargs):
+                         product, version, **kwargs):
     metadatakey = "{}_backup_metadata.json".format(kwargs['uid'])
     tmpfile = "/tmp/backrest_metadata.tmp"
-    folder = "{}_{}_{}".format(backupname, timestamp, mode)
+
+    if product == "dx":
+        folder = "{}_{}_{}".format(backupname, timestamp, mode)
+    else:
+        folder = backupname
+
     try:
         aws_sm_md.download_file(tmpfile, object_name=metadatakey, bucket=bucket)
         logging.info("A existing metadata file have been downloaded from {}"
@@ -137,13 +142,17 @@ def add_to_metadata_file(bucket, backupname, timestamp, mode,
                      .format(bucket))
         listbackups = {"backups": []}
 
+    if product == 'dx':
+        size = cp.folder_size(folder, bucket=kwargs['frombucket'])
+    else:
+        size = 1
 
     d = {"name": backupname,
          "timestamp": timestamp,
          "mode": mode,
-         "size": cp.folder_size(folder, bucket=kwargs['frombucket']),
-         "product": dx_product,
-         "version": dx_version,
+         "size": size,
+         "product": product,
+         "version": version,
          "cloudprovider": cloudprovider,
          "region": region,
          "envrole": role
@@ -230,10 +239,17 @@ if __name__ == '__main__':
     # cloudprovider = args.cloudprovider
 
     try:
-        dx_version = os.environ['DX_VERSION']
-        dx_product = 'dx'
+        version = os.environ['DX_VERSION']
+        product = 'dx'
     except:
-        dx_version = dx_product = 'undefined'
+        version = dx_product = 'undefined'
+
+    if version == 'undefined':
+        try:
+            version = os.environ['UNOMI_VERSION']
+            product = 'jcustomer'
+        except:
+            version = product = 'undefined'
 
 
     def getuid():
@@ -283,7 +299,7 @@ if __name__ == '__main__':
         metabucket = setmetabucketname()
         print(add_to_metadata_file(metabucket, args.backupname,
                                    timestamp, args.mode,
-                                   dx_product, dx_version,
+                                   product, version,
                                    displayname=args.displayname,
                                    uid=uid, frombucket=args.bucketname))
     elif args.action == 'delmeta':
