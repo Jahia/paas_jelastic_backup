@@ -21,6 +21,9 @@ onInstall:
               - if(settings.uid_source):
                   - setGlobals:
                       bucketname: jc${settings.envrole_source}${settings.uid_source}${globals.wc_region_source} -F ${settings.cloud_source},${settings.region_source},${settings.envrole_source}
+              - setGlobals:
+                  regionRealName_source: ${settings.region_source}
+                  cloudProvider_source: ${settings.cloud_source}
 
   - if(settings.source_env):
       - envSource
