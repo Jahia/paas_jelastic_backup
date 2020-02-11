@@ -4,15 +4,13 @@ FROM centos:centos7
 RUN yum -y update \
   && yum -y install epel-release cronie glibc-common \
   && yum -y install python36 python36-pip python36-devel gcc systemd-devel \
-  && yum clean all \
-  && mkdir /pylastic 
+  && yum clean all
 
 RUN python3 -m pip install --upgrade pip \
-  && python3 -m pip install requests flask flask_restful python-crontab cysystemd
+  && python3 -m pip install requests flask flask_restful python-crontab cysystemd jahia-pylastic
 
 
 COPY app.py /app.py
-COPY pylastic/pylastic.py /pylastic/pylastic.py
 COPY import_package_as_user.py /import_package_as_user.py
 COPY launch_api.service /etc/systemd/system/launch_api.service
 COPY dd_setapikey.service /etc/systemd/system/dd_setapikey.service

@@ -1,6 +1,11 @@
 # Backup Package Release notes
 
-## actual version: v1.1
+## actual version: v1.3
+
+### v1.4 (2020-02-11)
+* [NEW]: Use Pypi official package *jahia-pylastic* instead of a local Pypi version
+
+### v1.3
 
 ### v1.2 (2019-10-14)
 * [FIX]: autodetecte database endpoint

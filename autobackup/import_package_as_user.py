@@ -4,7 +4,7 @@ import logging
 import argparse
 import json
 import re
-from pylastic.pylastic import *
+from pylastic import *
 from cysystemd import journal
 
 LOG_FORMAT = "%(asctime)s %(levelname)s: [%(funcName)s] %(message)s"
