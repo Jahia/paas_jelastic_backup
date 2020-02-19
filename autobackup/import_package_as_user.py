@@ -79,6 +79,9 @@ def importPackage(classname):
         quit(1)
     return resp
 
+def isEnvStarted(classname):
+    res = classname.envControlGetEnvInfo(args.env)
+    return res['env']['status'] == 1
 
 if args.token:
     adminSess = Jelastic(args.jelastic, token=args.token)
@@ -100,16 +103,24 @@ if args.sudo:
     userToken = adminSess.sysAdminSignAsUser(args.sudo)
     userSess = Jelastic(args.jelastic, login=args.sudo,
                         session=userToken)
-    resp = importPackage(userSess)
+    envUp = isEnvStarted(userSess)
+    if envUp:
+        resp = importPackage(userSess)
 else:
-    importPackage(adminSess)
+    envUp = isEnvStarted(userSess)
+    if envUp:
+        importPackage(adminSess)
 
 if userSess:
     userSess.signOut()
 if adminSess:
     adminSess.signOut()
-r = json.loads(resp.text)
-if r['response']['result'] == 0:
+if not envUp:
+    logging.info("STOPPED ENV : nothing to backup")
     logging.info("BACKUP END: the backup package return is ok")
 else:
-    logging.error("BACKUP END: An error was return by the backup package: {}".format(resp.text))
+    r = json.loads(resp.text)
+    if r['response']['result'] == 0:
+        logging.info("BACKUP END: the backup package return is ok")
+    else:
+        logging.error("BACKUP END: An error was return by the backup package: {}".format(resp.text))
