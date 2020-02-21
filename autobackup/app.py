@@ -16,7 +16,7 @@ LOG_FORMAT = "%(levelname)s: [%(funcName)s] %(message)s"
 logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
 
 
-script = "source /.jelenv && export $(grep MASTER_PWD /.jelenv) && cd / && python3 /import_package_as_user.py -l \"{login}\" -p \"{password}\" -u '{url}' --settings \"{settings}\" --env {env} -s \"{sudo}\" >> /var/log/backup_{sudo}-{env}.log 2>&1"
+script = "source /.jelenv && export $(grep MASTER_PWD /.jelenv) && cd / && python3 /import_package_as_user.py -l \"{login}\" -p \"{password}\" -u \"{url}\" --settings \"{settings}\" --env {env} -s \"{sudo}\" >> /var/log/backup_{sudo}-{env}.log 2>&1"
 
 @app.route("/")
 def hello():
@@ -52,7 +52,7 @@ class CronJob(Resource):
         if not args.command:
             command = script.format(login='${MASTER_LOGIN}',
                                     password='${MASTER_PWD}',
-                                    url=args.url,
+                                    url="https://raw.githubusercontent.com/Jahia/paas_jelastic_backup/$BACKUP_BRANCH/backup.yml",
                                     settings=args.settings.replace('"', '\\"'),
                                     env=args.envname,
                                     sudo=args.sudo)
