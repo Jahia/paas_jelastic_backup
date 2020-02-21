@@ -3,6 +3,7 @@
 ## actual version: v1.3
 
 ### v1.4 (2020-02-11)
+* [NEW]: Do not try to backup stopped env
 * [NEW]: Use Pypi official package *jahia-pylastic* instead of a local Pypi version
 
 ### v1.3
