@@ -5,6 +5,9 @@ name: Jahia - Restores an environment from a bucket
 logo: /images/jahia-logo-70x70.png
 id: jahia-restore-from-bucket
 
+globals:
+  logAction: "Restore"
+
 mixins:
   - mixins/common-backup-actions.yml
   - mixins/elasticsearch.yml
@@ -56,6 +59,7 @@ onInstall:
 actions:
   restoreJahia:
     - cmd [proc,cp]: |-
+        ## [${globals.logAction}] - 2/5
         sudo service tomcat stop
         export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
         provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
@@ -68,6 +72,7 @@ actions:
         tar xf digital-factory-data.tar.gz -C /
         rm digital-factory-data.tar.gz
     - cmd [proc,cp]: |-
+        ## [${globals.logAction}] - 3/5
         export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
         provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
         cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
@@ -104,6 +109,7 @@ actions:
         - mysql -e "GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'%'"
       user: mysql
     - cmd [proc]: |-
+        ## [${globals.logAction}] - 4/5
         export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
         provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
         cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
@@ -119,8 +125,9 @@ actions:
       user: mysql
     - cmd [proc,cp]: |-
           find /data/digital-factory-data/modules -name "healthcheck-cluster*" -print -delete
-    - cmd [proc]:
-        - sudo service tomcat start
+    - cmd [proc]: |-
+        ## [${globals.logAction}] - 5/5
+        sudo service tomcat start
     - log: "## Waiting a bit before starting browsing's tomcat"
     - sleep:
         - milliseconds: 120000

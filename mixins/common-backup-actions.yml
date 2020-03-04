@@ -2,6 +2,7 @@
 actions:
   installBackupTools:
     cmd [${this}]: |-
+      ## [${globals.logAction}] - 1/5
       sudo yum install -y python36 python36-pip
       sudo python3 -m pip install --upgrade pip
       sudo python3 -m pip install --upgrade boto3 azure adal

@@ -2,6 +2,7 @@
 actions:
   restoreElasticsearch:
     - script: |-
+        ## [${globals.logAction}] - 3/5
         // Extract only bucketname in case of foreign restore
         var account="${globals.bucketname}";
         account=account.split(" ")[0];
@@ -18,8 +19,10 @@ actions:
         - setAzureSnapshotRepository
 
     - cmd[${nodes.es.first.id}]: |-
+        ## [${globals.logAction}] - 4/5
         curl -o /dev/null -X DELETE http://${nodes.es.first.intIP}:9200/_all
         timestamp=$(echo "${settings.timestamp}"| awk '{print tolower($0)}')
+        ## [${globals.logAction}] - 5/5
         curl -o /tmp/restore-res  -XPOST "${nodes.es.first.intIP}:9200/_snapshot/backup_repository/${timestamp}_${settings.backtype}/_restore"
         return_code=$?
         error=$(grep error /tmp/restore-res)
@@ -35,6 +38,7 @@ actions:
 
   backupElasticsearch:
     - cmd[${nodes.es.first.id}]: |-
+        ## [${globals.logAction}] - 2/5
         cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST)
         env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g')
         echo jc${cluster_role}${env.uid}${env_region}
@@ -65,6 +69,7 @@ actions:
 
     # start backup
     - cmd[${nodes.es.first.id}]: |-
+        ## [${globals.logAction}] - 3/5
         timestamp=$(echo "${globals.timestamp}"| awk '{print tolower($0)}')
         curl -o /tmp/backup-res -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository/${timestamp}_${settings.backtype}?wait_for_completion=true"
         return_code=$?
