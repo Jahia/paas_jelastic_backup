@@ -3,7 +3,7 @@
 This is to create a _Jelastic_ environment that will can handle scheduled environment backup througt an API and a crontab.
 
 ## Docker Image
-A `Dockerfile` is provide in order to build it.
+[jahia/paas_autobackup](https://hub.docker.com/repository/docker/jahia/paas_autobackup)
 
 ## Create Env
 Only *one* _scheduled backup env_ is needed by _Jelastic_ cluster.
