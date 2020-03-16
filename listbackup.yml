@@ -5,6 +5,9 @@ name: Jahia - List backup in bucket
 logo: /images/jahia-logo-70x70.png
 id: jahia-list-from-bucket
 
+globals:
+  logAction: "List"
+
 mixins:
   - mixins/common-backup-actions.yml
 
