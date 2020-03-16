@@ -23,6 +23,8 @@ nodes:
       MASTER_PWD: ${settings.masterPwd}
       AWS_ACCESS_KEY: ${settings.awsAccess}
       AWS_SECRET_KEY: ${settings.awsSecret}
+      AWS_ACCESS_KEY_ID: ${settings.awsAccess}
+      AWS_SECRET_ACCESS_KEY: ${settings.awsSecret}
       DD_API_KEY: ${settings.dd_api_key}
       LANG: en_US.utf8
     volumes:
