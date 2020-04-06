@@ -2,7 +2,6 @@
 actions:
   restoreElasticsearch:
     - script: |-
-        ## [${globals.logAction}] - 3/5
         // Extract only bucketname in case of foreign restore
         var account="${globals.bucketname}";
         account=account.split(" ")[0];
@@ -19,10 +18,9 @@ actions:
         - setAzureSnapshotRepository
 
     - cmd[${nodes.es.first.id}]: |-
-        ## [${globals.logAction}] - 4/5
+        ## [${globals.logAction}] - 5/5
         curl -o /dev/null -X DELETE http://${nodes.es.first.intIP}:9200/_all
         timestamp=$(echo "${settings.timestamp}"| awk '{print tolower($0)}')
-        ## [${globals.logAction}] - 5/5
         curl -o /tmp/restore-res  -XPOST "${nodes.es.first.intIP}:9200/_snapshot/backup_repository/${timestamp}_${settings.backtype}/_restore"
         return_code=$?
         error=$(grep error /tmp/restore-res)
@@ -162,6 +160,7 @@ actions:
 
   rotateElasticsearchBackup:
     - cmd[${nodes.es.first.id}]: |-
+        ## [${globals.logAction}] - 5/5
         export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
         cd paas_jelastic_backup
         # filter and format snapshot list
