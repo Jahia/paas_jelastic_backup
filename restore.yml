@@ -105,8 +105,16 @@ actions:
             ~/paas_jelastic_backup/revisionNode.py -n $num
           fi
     - log: "## TEMPORARY FIX FOR RESTORATION: GRANT ALL ON *.* TO JAHIA'S DB USER"
-    - cmd[${nodes.sqldb.master.id}]:
-        - mysql -e "GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'%'"
+    # Starting with mariadb 10.4, jahia's db user is not longer root on database
+    # resulting in the need to connect as 'mysql' user and temporaly grants
+    # jahia's db user for is can successfuly import the dump from processing node.
+    # see here for more details: https://mariadb.org/authentication-in-mariadb-10-4/
+    # next cmd test if connexion is ok with 'mysql'@'localhost':
+    #   - if ok, so it's >10.4 and we need temporary grants
+    - cmd[${nodes.sqldb.master.id}]: |-
+          if (mysql -se 'select 1' > /dev/null 2>&1); then
+            mysql -e "GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'%'"
+          fi
       user: mysql
     - cmd [proc]: |-
         ## [${globals.logAction}] - 4/5
@@ -121,7 +129,9 @@ actions:
         rm -f jahia.sql.gz
     - log: "## TEMPORARY FIX FOR RESTORATION: REVOKE ALL ON *.* TO JAHIA'S DB USER"
     - cmd[${nodes.sqldb.master.id}]:
-        - mysql -e "REVOKE ALL PRIVILEGES ON *.* FROM '$DB_USER'@'%'"
+          if (mysql -se 'select 1' > /dev/null 2>&1); then
+            mysql -e "REVOKE ALL PRIVILEGES ON *.* FROM '$DB_USER'@'%'"
+          fi
       user: mysql
     - cmd [proc,cp]: |-
           find /data/digital-factory-data/modules -name "healthcheck-cluster*" -print -delete
