@@ -128,7 +128,7 @@ actions:
         gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h ${mysql_host} --max_allowed_packet=1024M
         rm -f jahia.sql.gz
     - log: "## TEMPORARY FIX FOR RESTORATION: REVOKE ALL ON *.* TO JAHIA'S DB USER"
-    - cmd[${nodes.sqldb.master.id}]:
+    - cmd[${nodes.sqldb.master.id}]: |-
           if (mysql -se 'select 1' > /dev/null 2>&1); then
             mysql -e "REVOKE ALL PRIVILEGES ON *.* FROM '$DB_USER'@'%'"
           fi
