@@ -214,9 +214,9 @@ class PlayWithIt():
         blob = BlockBlobService(self.sto_account, sto_key)
         fl = []
         for obj in blob.list_blob_names(self.sto_cont_name):
-            if obj.split('/')[0] == 'metadata':
-                continue
-            fl.append(obj.split('/')[0])
+            backup_root_dir = obj.split('/')[0]
+            if backup_root_dir != 'metadata' and backup_root_dir not in fl:
+                fl.append(backup_root_dir)
         fl.sort
         return fl
 
