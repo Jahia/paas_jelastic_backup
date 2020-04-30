@@ -2,6 +2,11 @@
 
 ## actual version: v1.3
 
+### v1.4.2 (2020-04-29)
+* [BUG]: PAAS-953 fix marker file used for restore backup for Jahia under 7.2.3.2
+
+### v1.4.1
+
 ### v1.4 (2020-02-18)
 * [NEW]: Do not try to backup stopped env
 * [NEW]: Use Pypi official package *jahia-pylastic* instead of a local Pypi version
