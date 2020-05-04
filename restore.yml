@@ -113,10 +113,9 @@ actions:
         - case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; "galera") mysql_host="galera";; *) mysql_host="mysqldb"; esac
         - gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h ${mysql_host} --max_allowed_packet=1024M
         - rm -f jahia.sql.gz
-    - log: "## TEMPORARY FIX FOR RESTORATION: REVOKE ALL ON *.* TO JAHIA'S DB USER"
-    - cmd [proc]:
         - query="delete from JR_J_LOCAL_REVISIONS"
-        - mysql -h $DB_ENDPOINT -u $DB_USER -p$DB_PASSWORD -s jahia -e "$query"
+        - mysql -h ${mysql_host} -u $DB_USER -p$DB_PASSWORD -s jahia -e "$query"
+    - log: "## TEMPORARY FIX FOR RESTORATION: REVOKE ALL ON *.* TO JAHIA'S DB USER"
     - cmd[${nodes.sqldb.master.id}]:
         - mysql -e "REVOKE ALL PRIVILEGES ON *.* FROM '$DB_USER'@'%'"
       user: mysql
