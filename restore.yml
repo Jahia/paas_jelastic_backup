@@ -83,7 +83,7 @@ actions:
         tar xf digital-factory-config.tar.gz -C /
         chown tomcat:tomcat -R /opt/tomcat/conf
         rm -f digital-factory-config.tar.gz
-        rm -f /data/digital-factory-data/repository/.lock
+        rm -rf /data/digital-factory-data/repository/.lock /data/digital-factory-data/repository/workspace /data/digital-factory-data/repository/index
         if [ $(echo $DX_VERSION | sed 's/\.//g') -lt 7232 ]; then touch /data/digital-factory-data/backup-restore; else touch /data/digital-factory-data/safe-env-clone; fi;
         sed -i "s|^cluster.node.serverId.*|cluster.node.serverId = $HOSTNAME|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
     - if (settings.removeEnvlink && ${settings.removeEnvlink} == false):
