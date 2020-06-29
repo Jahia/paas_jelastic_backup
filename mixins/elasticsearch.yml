@@ -69,7 +69,7 @@ actions:
     - cmd[${nodes.es.first.id}]: |-
         ## [${globals.logAction}] - 3/5
         timestamp=$(echo "${globals.timestamp}"| awk '{print tolower($0)}')
-        curl -o /tmp/backup-res -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository/${timestamp}_${settings.backtype}?wait_for_completion=true"
+        curl -o /tmp/backup-res -H 'Content-Type: application/json' -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository/${timestamp}_${settings.backtype}?wait_for_completion=true"
         return_code=$?
         error=$(grep error /tmp/backup-res)
         res=$(wc -l<<<$error)
@@ -82,7 +82,7 @@ actions:
 
   setAwsSnapshotRepository:
     - cmd[${nodes.es.first.id}]: |-
-        curl -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository?verify=false&pretty" -d"
+        curl -H 'Content-Type: application/json' -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository?verify=false&pretty" -d"
           {
             \"type\": \"s3\",
             \"settings\": {
@@ -96,7 +96,7 @@ actions:
 
   setAzureSnapshotRepository:
     - cmd[${nodes.es.first.id}]: |-
-        curl -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository?verify=false&pretty" -d"
+        curl -H 'Content-Type: application/json' -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository?verify=false&pretty" -d"
           {
             \"type\": \"azure\",
             \"settings\": {
@@ -155,7 +155,7 @@ actions:
           - replica: 0
     - cmd[${nodes.es.first.id}]: |-
         curl -s http://$(hostname):9200/_cat/shards | awk '{print $1}' | sort | uniq | while read index; do
-            curl -s -XPUT http://$(hostname):9200/$(echo $index)/_settings -d '{"index":{"number_of_replicas": ${globals.replica} }}'
+            curl -H 'Content-Type: application/json' -s -XPUT http://$(hostname):9200/$(echo $index)/_settings -d '{"index":{"number_of_replicas": ${globals.replica} }}'
         done
 
   rotateElasticsearchBackup:
