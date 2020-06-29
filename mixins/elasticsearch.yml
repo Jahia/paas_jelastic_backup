@@ -52,8 +52,16 @@ actions:
     - setGlobals:
         provider: ${response.out}
 
+    - cmd[${nodes.es.first.id}]: |-
+        yum install -y jq
+    - cmd[${nodes.es.first.id}]: |-
+        curl -s "${nodes.es.first.intIP}:9200" | jq -r '.version.number'
+    - setGlobals:
+        esVersion: ${response.out}
+
     # Configure backup depending on cloud provider
     - if ("${globals.provider}" == "aws"):
+        - setAwsElasticsearchConfig
         - cmd[${nodes.es.first.id}]: |-
             # Create the bucket if doesn't exists
             export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
@@ -88,8 +96,8 @@ actions:
             \"settings\": {
                 \"bucket\": \"${globals.account}\",
                 \"region\": \"${globals.region}\",
-                \"access_key\": \"${settings.aws_access_key}\",
-                \"secret_key\": \"${settings.aws_secret_key}\",
+                ${globals.awsAccessKeyJson}
+                ${globals.awsSecretKeyJson}
                 \"base_path\" : \"${settings.backup_name}/elasticsearch\"
             }
           }"
@@ -104,6 +112,25 @@ actions:
                 \"base_path\" : \"elasticsearch\"
             }
           }"
+
+  # Using an Elasticsearch keystore to add AWS keys
+  setAwsElasticsearchConfig:
+    - if ('${globals.esVersion}' >= '6.4.0'):
+        - cmd[${nodes.es.first.id}]: |-
+            if ! /usr/share/elasticsearch/bin/elasticsearch-keystore list; then
+                /usr/share/elasticsearch/bin/elasticsearch-keystore create
+            fi
+            printf "${settings.aws_access_key}" | /usr/share/elasticsearch/bin/elasticsearch-keystore add -f s3.client.default.access_key
+            printf "${settings.aws_secret_key}" | /usr/share/elasticsearch/bin/elasticsearch-keystore add -f s3.client.default.secret_key
+            curl -X POST "${nodes.es.first.intIP}:9200/_nodes/reload_secure_settings"
+        - setGlobals:
+            awsAccessKeyJson: ""
+            awsSecretKeyJson: ""
+    - else:
+        - setGlobals:
+            awsAccessKeyJson: "\\\"access_key\\\": \\\"${settings.aws_access_key}\\\","
+            awsSecretKeyJson: "\\\"secret_key\\\": \\\"${settings.aws_secret_key}\\\","
+
 
   setAzureElasticsearchConfig:
     - cmd[${nodes.es.first.id}]: |-
