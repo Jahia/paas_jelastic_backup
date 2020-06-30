@@ -10,7 +10,13 @@ actions:
         account: ${response.account}
         region: ${globals.regionRealName_source}
 
+    - cmd[${nodes.es.first.id}]: |-
+        curl -s "${nodes.es.first.intIP}:9200" | python -c "import sys, json; print(json.load(sys.stdin)['version']['number'])"
+    - setGlobals:
+        esVersion: ${response.out}
+
     - if ("${globals.cloudProvider_source}" == "aws"):
+        - setAwsElasticsearchConfig
         - setAwsSnapshotRepository
     - else:
         - setAzureElasticsearchConfig:
