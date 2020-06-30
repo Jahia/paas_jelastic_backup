@@ -53,9 +53,7 @@ actions:
         provider: ${response.out}
 
     - cmd[${nodes.es.first.id}]: |-
-        yum install -y jq
-    - cmd[${nodes.es.first.id}]: |-
-        curl -s "${nodes.es.first.intIP}:9200" | jq -r '.version.number'
+        curl -s "${nodes.es.first.intIP}:9200" | python -c "import sys, json; print(json.load(sys.stdin)['version']['number'])"
     - setGlobals:
         esVersion: ${response.out}
 
