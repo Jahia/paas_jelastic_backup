@@ -9,7 +9,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 LOG_FORMAT = "%(asctime)s %(levelname)s: [%(funcName)s] %(message)s"
-logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
+logging.basicConfig(format=LOG_FORMAT, level=logging.INFO, stream=sys.stdout)
 
 
 class ProgressPercentage(object):

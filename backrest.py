@@ -4,10 +4,11 @@ import argparse
 import os
 import json
 import re
+import sys
 from datetime import datetime
 
 LOG_FORMAT = "%(asctime)s %(levelname)s: [%(funcName)s] %(message)s"
-logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
+logging.basicConfig(format=LOG_FORMAT, level=logging.INFO, stream=sys.stdout)
 
 AZ_RG = "paas_backup"
 # AZ_CRED = "{}/.azure/cred.json".format(os.environ['HOME'])
