@@ -71,6 +71,11 @@ actions:
         sudo chown tomcat:tomcat /data
         tar xf digital-factory-data.tar.gz -C /
         rm digital-factory-data.tar.gz
+    - if ("${response.errOut}" != ""):
+        - return:
+            type: error
+            message: "An error occured while restoring jahia data."
+
     - cmd [proc,cp]: |-
         ## [${globals.logAction}] - 3/5
         export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
@@ -86,6 +91,11 @@ actions:
         rm -rf /data/digital-factory-data/repository/.lock /data/digital-factory-data/repository/workspace /data/digital-factory-data/repository/index
         if [ $(echo $DX_VERSION | sed 's/\.//g') -lt 7232 ]; then touch /data/digital-factory-data/backup-restore; else touch /data/digital-factory-data/safe-env-clone; fi;
         sed -i "s|^cluster.node.serverId.*|cluster.node.serverId = $HOSTNAME|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
+    - if ("${response.errOut}" != ""):
+        - return:
+            type: error
+            message: "An error occured while restoring jahia configuration."
+
     - if (settings.removeEnvlink && ${settings.removeEnvlink} == false):
         - log: keep env link
     - else:
@@ -129,6 +139,11 @@ actions:
         rm -f jahia.sql.gz
         query="delete from JR_J_LOCAL_REVISIONS"
         mysql -h ${mysql_host} -u $DB_USER -p$DB_PASSWORD -s jahia -e "$query"
+    - if ("${response.errOut}" != ""):
+        - return:
+            type: error
+            message: "An error occured during mysql dump."
+
     - log: "## TEMPORARY FIX FOR RESTORATION: REVOKE ALL ON *.* TO JAHIA'S DB USER"
     - cmd[${nodes.sqldb.master.id}]: |-
           if (mysql -se 'select 1' > /dev/null 2>&1); then
