@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 import logging
+import sys
 import adal
 from azure.common.client_factory import get_client_from_cli_profile
 from azure.common.client_factory import get_client_from_auth_file
@@ -22,7 +23,7 @@ from msrestazure.azure_cloud import AZURE_PUBLIC_CLOUD
 
 
 LOG_FORMAT = "%(asctime)s %(levelname)s: [%(funcName)s] %(message)s"
-logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
+logging.basicConfig(format=LOG_FORMAT, level=logging.INFO, stream=sys.stdout)
 
 RG = "testlfu"
 STO_ACCOUNT = "testlfu"
