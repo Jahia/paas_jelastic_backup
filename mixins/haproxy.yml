@@ -1,0 +1,43 @@
+---
+actions:
+  backupHaproxy:
+    - cmd [${nodes.bl.first.id}]: |-
+        export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+        provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
+        cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
+        env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
+        cd paas_jelastic_backup
+        tar -czvf haproxy-cfg.tar.gz -C / etc/haproxy/haproxy.cfg.d
+        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f haproxy-cfg.tar.gz ${globals.argTimestamp} -m ${settings.backtype}
+        rm -f haproxy.cfg.d.tar.gz
+    - if ("${response.errOut}" != ""):
+        - return:
+            type: error
+            message: "An error occurred during haproxy backup."
+
+  restoreHaproxy:
+    - cmd [bl]: |-
+        export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+        provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
+        cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
+        env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
+        cd paas_jelastic_backup
+        python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f haproxy-cfg.tar.gz
+        rm /etc/haproxy/haproxy.cfg.d/*
+        tar -xzvf haproxy-cfg.tar.gz -C / etc/haproxy/haproxy.cfg.d
+        rm -f haproxy-cfg.tar.gz
+        sudo service haproxy reload
+    - if ("${response.errOut}" != ""):
+        - return:
+            type: error
+            message: "An error occurred while restoring haproxy configuration."
+
+    - cmd [${nodes.bl.first.id}]: |-
+        auth_disable=$(grep -e  "#acl tools.*#HTTP_AUTH_BASIC" /etc/haproxy/haproxy.cfg.d/00-global.cfg)
+        if [ "$auth_disable" == "" ]; then
+          echo true
+        else
+          echo false
+        fi
+    - env.control.AddContainerEnvVars[bl]:
+      vars: {"auth_basic_enabled": "${response.out}"}
