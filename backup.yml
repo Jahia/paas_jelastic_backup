@@ -75,7 +75,7 @@ actions:
     - if ("${response.errOut}" != ""):
         - return:
             type: error
-            message: "An error occured during jahia data backup."
+            message: "An error occurred during jahia data backup."
     - cmd [proc]: |-
         export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
         provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
@@ -88,7 +88,7 @@ actions:
     - if ("${response.errOut}" != ""):
         - return:
             type: error
-            message: "An error occured during jahia configuration backup."
+            message: "An error occurred during jahia configuration backup."
     - cmd [proc]: |-
         export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
         provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
@@ -102,7 +102,7 @@ actions:
     - if ("${response.errOut}" != ""):
         - return:
             type: error
-            message: "An error occured during environment variables backup."
+            message: "An error occurred during environment variables backup."
 
   backupGalera:
     - cmd [proc]: |-
@@ -119,7 +119,7 @@ actions:
     - if ("${response.errOut}" != ""):
         - return:
             type: error
-            message: "An error occured during database backup."
+            message: "An error occurred during database backup."
 
 
   addMetadata:
@@ -134,7 +134,7 @@ actions:
     - if ("${response.errOut}" != ""):
         - return:
             type: error
-            message: "An error occured during backup's metadata definition."
+            message: "An error occurred during backup's metadata definition."
 
   rotateBackups:
     - cmd [${this}]: |-
@@ -148,7 +148,7 @@ actions:
     - if ("${response.errOut}" != ""):
         - return:
             type: error
-            message: "An error occured during backup rotation."
+            message: "An error occurred during backup rotation."
 settings:
   fields:
     - name: backup_name

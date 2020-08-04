@@ -36,7 +36,7 @@ actions:
     - if ("${response.out}" != ""):
         - return:
             type: error
-            message: "An error occured during the backup restore process."
+            message: "An error occurred during the backup restore process."
 
     - updateElasticsearchReplicas
 
@@ -90,7 +90,7 @@ actions:
     - if ("${response.out}" != ""):
         - return:
             type: error
-            message: "An error occured during the backup process."
+            message: "An error occurred during the backup process."
 
   setAwsSnapshotRepository:
     - cmd[${nodes.es.first.id}]: |-
@@ -171,7 +171,7 @@ actions:
     - if ("${globals.azure_secret}" == ""):
         - return:
             type: error
-            message: "An error occured during backup repository configuration."
+            message: "An error occurred during backup repository configuration."
 
   updateElasticsearchReplicas:
     - if(nodes.es.length > 1):

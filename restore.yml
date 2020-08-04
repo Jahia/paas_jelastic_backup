@@ -76,7 +76,7 @@ actions:
     - if ("${response.errOut}" != ""):
         - return:
             type: error
-            message: "An error occured while restoring jahia data."
+            message: "An error occurred while restoring jahia data."
 
     - cmd [proc,cp]: |-
         ## [${globals.logAction}] - 3/5
@@ -96,7 +96,7 @@ actions:
     - if ("${response.errOut}" != ""):
         - return:
             type: error
-            message: "An error occured while restoring jahia configuration."
+            message: "An error occurred while restoring jahia configuration."
 
     - cmd [proc,cp]: |-
         export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
@@ -114,7 +114,7 @@ actions:
     - if ("${response.errOut}" != ""):
         - return:
             type: error
-            message: "An error occured while restoring jahia environment variables."
+            message: "An error occurred while restoring jahia environment variables."
 
     - if (settings.removeEnvlink && ${settings.removeEnvlink} == false):
         - log: keep env link
@@ -162,7 +162,7 @@ actions:
     - if ("${response.errOut}" != ""):
         - return:
             type: error
-            message: "An error occured during mysql dump."
+            message: "An error occurred during mysql dump."
 
     - log: "## TEMPORARY FIX FOR RESTORATION: REVOKE ALL ON *.* TO JAHIA'S DB USER"
     - cmd[${nodes.sqldb.master.id}]: |-
