@@ -31,10 +31,12 @@ onInstall:
       - setTimestamp
 
   - if (nodes.proc):  # Jahia
-      - installBackupTools: proc,bl
+      - installBackupTools: proc
       - backupGalera
       - backupJahia
-      - backupHaproxy
+      - if (nodes.bl):  # Haproxy
+          - installBackupTools: bl
+          - backupHaproxy
       - addMetadata: proc
       - rotateBackups: proc
   - else:  # Jcustomer

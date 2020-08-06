@@ -50,9 +50,11 @@ onInstall:
       git-repos-url: ${response.git-repos-url}
 
   - if (nodes.proc):  # Jahia
-      - installBackupTools: proc,cp,bl
+      - installBackupTools: proc,cp
       - restoreJahia
-      - restoreHaproxy
+      - if (nodes.bl):
+          - installBackupTools: bl
+          - restoreHaproxy
   - else:  # Jcustomer
       - installBackupTools: ${nodes.es.first.id}
       - restoreElasticsearch
@@ -105,16 +107,22 @@ actions:
         env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
         cd paas_jelastic_backup
         python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f jahia-env-vars.gz
-        gunzip jahia-env-vars.gz
-        grep -ve "^jahia_cfg_" /.jelenv >> jahia-env-vars
-    - cmd [proc,cp]: |-
-        cat /opt/tomcat/temp/paas_jelastic_backup/jahia-env-vars > /.jelenv
-        rm -f /opt/tomcat/temp/paas_jelastic_backup/jahia-env-vars
-      user: root
-    - if ("${response.errOut}" != ""):
-        - return:
-            type: error
-            message: "An error occurred while restoring jahia environment variables."
+        ls jahia-env-vars.gz || exit 0
+    - if ("${response.errOut}" == ""):
+        - cmd [proc,cp]: |-
+            cd paas_jelastic_backup
+            gunzip jahia-env-vars.gz
+            grep -ve "^jahia_cfg_" /.jelenv >> jahia-env-vars
+        - cmd [proc,cp]: |-
+            cat /opt/tomcat/temp/paas_jelastic_backup/jahia-env-vars > /.jelenv
+            rm -f /opt/tomcat/temp/paas_jelastic_backup/jahia-env-vars
+          user: root
+        - if ("${response.errOut}" != ""):
+            - return:
+                type: error
+                message: "An error occurred while restoring jahia environment variables."
+    - else:
+      log: "No env var backup available"
 
     - if (settings.removeEnvlink && ${settings.removeEnvlink} == false):
         - log: keep env link
