@@ -8,7 +8,7 @@ actions:
         env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
         cd paas_jelastic_backup
         tar -czvf haproxy-cfg.tar.gz -C / etc/haproxy/haproxy.cfg.d
-        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f haproxy-cfg.tar.gz ${globals.argTimestamp} -m ${settings.backtype}
+        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f haproxy-cfg.tar.gz ${globals.argTimestamp} -m ${settings.backtype} || exit 1
         rm -f haproxy.cfg.d.tar.gz
     - if ("${response.errOut}" != ""):
         - return:

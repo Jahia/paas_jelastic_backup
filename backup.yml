@@ -72,7 +72,7 @@ actions:
         env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
         cd paas_jelastic_backup
         tar -czvf digital-factory-data.tar.gz -C / data/digital-factory-data/
-        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz ${globals.argTimestamp} -m ${settings.backtype}
+        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz ${globals.argTimestamp} -m ${settings.backtype} || exit 1
         rm -f digital-factory-data.tar.gz
     - if ("${response.errOut}" != ""):
         - return:
@@ -85,7 +85,7 @@ actions:
         env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
         cd paas_jelastic_backup
         tar -czvf digital-factory-config.tar.gz -C / opt/tomcat/conf/digital-factory-config/
-        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz ${globals.argTimestamp} -m ${settings.backtype}
+        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f digital-factory-config.tar.gz ${globals.argTimestamp} -m ${settings.backtype} || exit 1
         rm -f digital-factory-config.tar.gz
     - if ("${response.errOut}" != ""):
         - return:
@@ -99,7 +99,7 @@ actions:
         cd paas_jelastic_backup
         grep -e "^jahia_cfg_" /.jelenv > jahia-env-vars
         gzip jahia-env-vars
-        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f jahia-env-vars.gz ${globals.argTimestamp} -m ${settings.backtype}
+        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f jahia-env-vars.gz ${globals.argTimestamp} -m ${settings.backtype} || exit 1
         rm -f jahia-env-vars.gz
     - if ("${response.errOut}" != ""):
         - return:
@@ -116,7 +116,7 @@ actions:
         cd paas_jelastic_backup
         case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; "galera") mysql_host="galera";; *) mysql_host="mysqldb"; esac
         mysqldump --hex-blob --user=$DB_USER --password=$DB_PASSWORD -h ${mysql_host} --single-transaction --max_allowed_packet=1024M --quote-names --opt --databases --compress jahia | gzip > jahia.sql.gz
-        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f jahia.sql.gz ${globals.argTimestamp} -m ${settings.backtype}
+        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f jahia.sql.gz ${globals.argTimestamp} -m ${settings.backtype} || exit 1
         rm -f jahia.sql.gz
     - if ("${response.errOut}" != ""):
         - return:
@@ -132,7 +132,7 @@ actions:
         cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
         env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
         cd paas_jelastic_backup
-        python3 backrest.py -a addmeta --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} ${globals.argTimestamp} -m ${settings.backtype} --displayname '${env.displayName}'
+        python3 backrest.py -a addmeta --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} ${globals.argTimestamp} -m ${settings.backtype} --displayname '${env.displayName}' || exit 1
     - if ("${response.errOut}" != ""):
         - return:
             type: error
