@@ -290,24 +290,35 @@ if __name__ == '__main__':
         timestamp = datetime.today().strftime('%Y-%m-%dT%H:%M:00')
 
     if args.action == 'upload':
-        upload(args.file, args.bucketname, object_name)
+        if not upload(args.file, args.bucketname, object_name):
+            logging.error("Fail to upload file")
+            exit(1)
         if args.keep:
             retention(args.bucketname, args.backupname, args.keep)
     elif args.action == 'download':
-        download(args.bucketname, object_name, args.file)
+        if not download(args.bucketname, object_name, args.file):
+            logging.error("Fail to download file")
+            exit(1)
     elif args.action == 'addmeta':
         uid = getuid()
         metabucket = setmetabucketname()
-        print(add_to_metadata_file(metabucket, args.backupname,
+        res = add_to_metadata_file(metabucket, args.backupname,
                                    timestamp, args.mode,
                                    product, version,
                                    displayname=args.displayname,
-                                   uid=uid, frombucket=args.bucketname))
+                                   uid=uid, frombucket=args.bucketname)
+        if not res:
+            logging.error("Fail to add metadata")
+            exit(1)
+
     elif args.action == 'delmeta':
         uid = getuid()
         metabucket = setmetabucketname()
-        print(remove_from_metadata_file(metabucket, args.backupname,
-                                        timestamp, uid=uid))
+        res = remove_from_metadata_file(metabucket, args.backupname,
+                                        timestamp, uid=uid)
+        if not res:
+            logging.error("Fail to delete metadata")
+            exit(1)
     elif args.action == 'list':
         uid = getuid()
         metabucket = setmetabucketname()
