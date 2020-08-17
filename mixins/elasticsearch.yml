@@ -19,8 +19,12 @@ actions:
         - setAwsElasticsearchConfig
         - setAwsSnapshotRepository
     - else:
-        - setAzureElasticsearchConfig:
-            operation: "restore"
+        - if ('${globals.esVersion}' >= '6.4.0'):
+            - setAzureElasticsearch7Config:
+                operation: "restore"
+        - else:
+            - setAzureElasticsearch5Config:
+                operation: "restore"
         - setAzureSnapshotRepository
 
     - cmd[${nodes.es.first.id}]: |-
@@ -73,8 +77,12 @@ actions:
             python3 elasticsearch.py --bucketname ${globals.account} --backupname ${settings.backup_name} --cloudprovider=aws --operation=backup
         - setAwsSnapshotRepository
     - else:
-        - setAzureElasticsearchConfig:
-            operation: "backup"
+        - if ('${globals.esVersion}' >= '6.4.0'):
+            - setAzureElasticsearch7Config:
+                operation: "backup"
+        - else:
+            - setAzureElasticsearch5Config:
+                operation: "backup"
         - setAzureSnapshotRepository
 
     # start backup
@@ -136,7 +144,20 @@ actions:
             awsSecretKeyJson: "\\\"secret_key\\\": \\\"${settings.aws_secret_key}\\\","
 
 
-  setAzureElasticsearchConfig:
+  setAzureElasticsearch7Config:
+    - getAzureSecret:
+        operation: "${this.operation}"
+
+    - cmd[${nodes.es.first.id}]: |-
+        if ! /usr/share/elasticsearch/bin/elasticsearch-keystore list; then
+            /usr/share/elasticsearch/bin/elasticsearch-keystore create
+            echo "true"
+        fi
+        printf "${globals.account}" | /usr/share/elasticsearch/bin/elasticsearch-keystore add -f azure.client.default.account
+        printf "${globals.azure_secret}" | /usr/share/elasticsearch/bin/elasticsearch-keystore add -f azure.client.default.key
+        curl -X POST "${nodes.es.first.intIP}:9200/_nodes/reload_secure_settings"
+
+  setAzureElasticsearch5Config:
     - cmd[${nodes.es.first.id}]: |-
         grep azure_storage_user /etc/elasticsearch/elasticsearch.yml || true
     - if ("${response.out}" == ""):  # If azure config is not set
