@@ -7,9 +7,10 @@ actions:
         cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
         env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
         cd paas_jelastic_backup
-        tar -czvf haproxy-cfg.tar.gz -C / etc/haproxy/haproxy.cfg.d
-        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f haproxy-cfg.tar.gz ${globals.argTimestamp} -m ${settings.backtype} || exit 1
-        rm -f haproxy.cfg.d.tar.gz
+        cp /etc/haproxy/haproxy.cfg.d/00-global.cfg haproxy-00-global.cfg
+        gzip haproxy-00-global.cfg
+        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f haproxy-00-global.cfg.gz ${globals.argTimestamp} -m ${settings.backtype} || exit 1
+        rm -f haproxy-00-global.cfg.gz
     - if ("${response.errOut}" != ""):
         - return:
             type: error
@@ -22,8 +23,8 @@ actions:
         cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
         env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
         cd paas_jelastic_backup
-        python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f haproxy-cfg.tar.gz
-        ls haproxy-cfg.tar.gz || exit 0
+        python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f haproxy-00-global.cfg.gz
+        ls haproxy-00-global.cfg.gz || exit 0
     - if ("${response.errOut}" == ""):
         restoreHaproxyIfWorkaround:
     - else:
@@ -32,9 +33,8 @@ actions:
   restoreHaproxyIfWorkaround:
     - cmd [bl]: |-
         cd paas_jelastic_backup
-        rm /etc/haproxy/haproxy.cfg.d/*
-        tar -xzvf haproxy-cfg.tar.gz -C / etc/haproxy/haproxy.cfg.d
-        rm -f haproxy-cfg.tar.gz
+        gunzip haproxy-00-global.cfg.gz
+        mv haproxy-00-global.cfg /etc/haproxy/haproxy.cfg.d/00-global.cfg
         sudo service haproxy reload
     - if ("${response.errOut}" != ""):
         - return:
