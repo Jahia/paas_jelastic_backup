@@ -51,9 +51,10 @@ onInstall:
 
   - if (nodes.proc):  # Jahia
       - installBackupTools: proc,cp
-      - restoreJahia
       - if (nodes.bl):
           - installBackupTools: bl
+      - restoreJahia
+      - if (nodes.bl):
           - restoreHaproxy
   - else:  # Jcustomer
       - installBackupTools: ${nodes.es.first.id}
