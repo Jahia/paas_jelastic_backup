@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 import logging
+import os
 import sys
 import adal
 from azure.common.client_factory import get_client_from_cli_profile
@@ -235,6 +236,7 @@ class PlayWithIt():
             logging.error("Cannot download {}:{}:{}"
                           .format(self.sto_account, self.sto_cont_name,
                                   object_name))
+            os.remove(file_name)
             return False
         return True
 
