@@ -32,10 +32,11 @@ onInstall:
 
   - if (nodes.proc):  # Jahia
       - installBackupTools: proc
+      - if (nodes.bl):  # Haproxy
+          - installBackupTools: bl
       - backupGalera
       - backupJahia
       - if (nodes.bl):  # Haproxy
-          - installBackupTools: bl
           - backupHaproxy
       - addMetadata: proc
       - rotateBackups: proc
