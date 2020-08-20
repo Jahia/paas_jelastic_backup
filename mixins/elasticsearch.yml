@@ -148,7 +148,7 @@ actions:
     - getAzureSecret:
         operation: "${this.operation}"
 
-    - cmd[${nodes.es.first.id}]: |-
+    - cmd[es]: |-
         if ! /usr/share/elasticsearch/bin/elasticsearch-keystore list; then
             /usr/share/elasticsearch/bin/elasticsearch-keystore create
             echo "true"
