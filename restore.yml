@@ -131,7 +131,7 @@ actions:
     - else:
         - log: remove env link
         - cmd[proc, cp]: |-
-            rm -f /data/digital-factory-data/karaf/etc/org.jahia.modules.marketingfactory.settings-mf.cfg
+            rm -f /data/digital-factory-data/karaf/etc/org.jahia.modules.marketingfactory.settings-mf.cfg /data/digital-factory-data/karaf/etc/org.jahia.modules.jexperience.settings-global.cfg
         - environment.control.ApplyNodeGroupData [proc, cp]:
             data:
               envLink: ""
