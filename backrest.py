@@ -226,7 +226,7 @@ if __name__ == '__main__':
             with open('/metadata_from_HOST', 'r') as f:
                 props = dict(line.strip().split('=', 1) for line in f)
                 cloudprovider = props['JEL_CLOUDPROVIDER']
-                if cloudprovider not in ['aws', 'azure']:
+                if cloudprovider not in ['aws', 'azure', 'ovh']:
                     exit(1)
                 region = props['JEL_REGION']
                 role = props['JEL_ENV_ROLE']
@@ -284,6 +284,9 @@ if __name__ == '__main__':
         secret = json.loads(secret)
         with open(AZ_CRED, 'w') as f:
             f.write(json.dumps(secret, indent=4, sort_keys=True))
+    elif cloudprovider == 'ovh':
+        import JahiaCloud.aws as JC
+        cp = JC.PlayWithIt(region_name="eu-west-1", env=role)
     if args.timestamp:
         timestamp = args.timestamp
     else:
