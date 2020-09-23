@@ -17,7 +17,10 @@ actions:
 
     - if ("${globals.cloudProvider_source}" == "aws"):
         - setAwsElasticsearchConfig
-        - setAwsSnapshotRepository
+        - setAwsSnapshotRepository: ${globals.region}
+    - elif ("${globals.cloudProvider_source}" == "ovh"):
+        - setAwsElasticsearchConfig
+        - setAwsSnapshotRepository: "eu-west-1"
     - else:
         - if ('${globals.esVersion}' >= '6.4.0'):
             - setAzureElasticsearch7Config:
@@ -68,14 +71,17 @@ actions:
         esVersion: ${response.out}
 
     # Configure backup depending on cloud provider
-    - if ("${globals.provider}" == "aws"):
+    - if ("${globals.provider}" == "aws" || "${globals.provider}" == "ovh"):
         - setAwsElasticsearchConfig
         - cmd[${nodes.es.first.id}]: |-
             # Create the bucket if doesn't exists
             export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
             cd paas_jelastic_backup
-            python3 elasticsearch.py --bucketname ${globals.account} --backupname ${settings.backup_name} --cloudprovider=aws --operation=backup
-        - setAwsSnapshotRepository
+            python3 elasticsearch.py --bucketname ${globals.account} --backupname ${settings.backup_name} --cloudprovider=${globals.provider} --operation=backup
+        - if ("${globals.provider}" == "aws"):
+            - setAwsSnapshotRepository: ${globals.region}
+        - else:
+            - setAwsSnapshotRepository: "eu-west-1"
     - else:
         - if ('${globals.esVersion}' >= '6.4.0'):
             - setAzureElasticsearch7Config:
@@ -107,7 +113,7 @@ actions:
             \"type\": \"s3\",
             \"settings\": {
                 \"bucket\": \"${globals.account}\",
-                \"region\": \"${globals.region}\",
+                \"region\": \"${this}\",
                 ${globals.awsAccessKeyJson}
                 ${globals.awsSecretKeyJson}
                 \"base_path\" : \"${settings.backup_name}/elasticsearch\"
