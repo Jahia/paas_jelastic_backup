@@ -134,7 +134,7 @@ actions:
   # Using an Elasticsearch keystore to add AWS keys
   setAwsElasticsearchConfig:
     - if ('${globals.esVersion}' >= '6.4.0'):
-        - cmd[${nodes.es.first.id}]: |-
+        - cmd[es]: |-
             if ! /usr/share/elasticsearch/bin/elasticsearch-keystore list; then
                 /usr/share/elasticsearch/bin/elasticsearch-keystore create
             fi
