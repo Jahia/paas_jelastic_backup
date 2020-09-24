@@ -48,6 +48,11 @@ if __name__ == '__main__':
         cp = AWS.PlayWithIt(region_name=region, env=role)
         if not cp.test_if_bucket_exist(args.bucketname):
             cp.create_bucket(args.bucketname)
+    elif args.cloudprovider == "ovh" and args.operation == "backup":
+        # Create bucket if not exists
+        cp = AWS.PlayWithIt(region_name="eu-west-1", env=role)
+        if not cp.test_if_bucket_exist(args.bucketname):
+            cp.create_bucket(args.bucketname)
     elif args.cloudprovider == "azure":
         # Get azure secrets
         aws_sm_md = AWS.PlayWithIt(region_name="eu-west-1")
