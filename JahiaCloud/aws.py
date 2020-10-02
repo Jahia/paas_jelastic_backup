@@ -36,14 +36,15 @@ class ProgressPercentage(object):
 
 class PlayWithIt():
     def __init__(self, envname='testenv', accountID='testID',
-                 region_name='eu-west-1', env='prod',
-                 accesskey=None, secretkey=None, **kwargs):
+                 region_name='eu-west-1', env='prod', accesskey=None,
+                 secretkey=None, show_progress=False, **kwargs):
         self.region_name = region_name
         self.envname = envname
         self.accountID = accountID
         self.env = env
         self.accesskey = accesskey
         self.secretkey = secretkey
+        self.show_progress = show_progress
         self.tags = [{'Key': 'product', 'Value': 'cloud-pass'},
                      {'Key': 'envname', 'Value': self.envname},
                      {'Key': 'env', 'Value': self.env},
@@ -203,10 +204,11 @@ class PlayWithIt():
         # s3_client = s3.client('s3')
         try:
             s3_client.upload_file(file_name, bucket, object_name,
-                                  Callback=ProgressPercentage(file_name),
-                                  ExtraArgs={
-                                      "ServerSideEncryption": "AES256"
-                                  })
+                      Callback=ProgressPercentage(file_name) \
+                              if self.show_progress else None,
+                      ExtraArgs={
+                          "ServerSideEncryption": "AES256"
+                      })
             print('')  # just do get a new line
             logging.info("{} have been pushed to {}:{}"
                          .format(file_name, bucket, object_name))
@@ -257,8 +259,8 @@ class PlayWithIt():
             size = size['ResponseMetadata']['HTTPHeaders']['content-length']
             if not quiet:
                 s3_client.download_file(bucket, object_name, file_name,
-                                        Callback=ProgressPercentage(file_name,
-                                                                    int(size)))
+                            Callback=ProgressPercentage(file_name, int(size)) \
+                                    if self.show_progress else None)
                 print('')  # just do get a new line
             else:
                 s3_client.download_file(bucket, object_name, file_name)
