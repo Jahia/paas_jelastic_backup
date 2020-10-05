@@ -51,6 +51,9 @@ def argparser():
     parser.add_argument("-m", "--mode",
                         help="this is a manual launch or auto launch ?",
                         choices=['auto', 'manual'])
+    parser.add_argument("-p", "--progress",
+                        help="show transfert progression",
+                        action="store_true")
     return parser.parse_args()
 
 
@@ -214,6 +217,10 @@ def remove_from_metadata_file(bucket, backupname, timestamp, **kwargs):
 if __name__ == '__main__':
     args = argparser()
 
+    if args.progress:
+        show_progress = True
+    else:
+        show_progress = False
 
     if args.foreign:
         cloudprovider = args.foreign.split(',')[0]
@@ -270,10 +277,10 @@ if __name__ == '__main__':
     logging.info("You want to work with {} as cloud provider. Let's go"
                  .format(cloudprovider))
     import JahiaCloud.aws as AWS
-    aws_sm_md = AWS.PlayWithIt(region_name="eu-west-1")
+    aws_sm_md = AWS.PlayWithIt(region_name="eu-west-1", show_progress=show_progress)
     if cloudprovider == 'aws':
         import JahiaCloud.aws as JC
-        cp = JC.PlayWithIt(region_name=region, env=role)
+        cp = JC.PlayWithIt(region_name=region, env=role, show_progress=show_progress)
     elif cloudprovider == 'azure' and args.action != 'list':
         import JahiaCloud.Azure as JC
         cp = JC.PlayWithIt(region_name=region, sto_cont_name=args.backupname.lower(),
@@ -286,7 +293,7 @@ if __name__ == '__main__':
             f.write(json.dumps(secret, indent=4, sort_keys=True))
     elif cloudprovider == 'ovh':
         import JahiaCloud.aws as JC
-        cp = JC.PlayWithIt(region_name="eu-west-1", env=role)
+        cp = JC.PlayWithIt(region_name="eu-west-1", env=role, show_progress=show_progress)
     if args.timestamp:
         timestamp = args.timestamp
     else:
