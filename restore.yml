@@ -7,6 +7,7 @@ id: jahia-restore-from-bucket
 
 globals:
   logAction: "Restore"
+  logsPath: "/var/log/jelastic-packages/restore.log"
 
 mixins:
   - mixins/common-backup-actions.yml
@@ -50,6 +51,7 @@ onInstall:
       git-repos-url: ${response.git-repos-url}
 
   - if (nodes.proc):  # Jahia
+      - clearJelasticLogs: proc, cp
       - installBackupTools: proc,cp
       - if (nodes.bl):
           - installBackupTools: bl
@@ -57,6 +59,7 @@ onInstall:
       - if (nodes.bl):
           - restoreHaproxy
   - else:  # Jcustomer
+      - clearJelasticLogs: ${nodes.es.first.id}
       - installBackupTools: ${nodes.es.first.id}
       - restoreElasticsearch
 
@@ -71,15 +74,15 @@ actions:
         cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
         env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
         cd paas_jelastic_backup
-        python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-data.tar.gz || exit 1
+        python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-data.tar.gz 2>${globals.logsPath} || exit 1
         sudo rm -rf /data/digital-factory-data
         sudo chown tomcat:tomcat /data
-        tar xf digital-factory-data.tar.gz -C /
+        tar xf digital-factory-data.tar.gz -C / 2>${globals.logsPath} || exit 1
         rm digital-factory-data.tar.gz
     - if ("${response.errOut}" != ""):
         - return:
             type: error
-            message: "An error occurred while restoring jahia data."
+            message: "An error occurred while restoring jahia data. ${response.errOut}"
 
     - cmd [proc,cp]: |-
         ## [${globals.logAction}] - 3/5
@@ -88,9 +91,9 @@ actions:
         cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
         env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
         cd paas_jelastic_backup
-        python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-config.tar.gz || exit 1
+        python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f digital-factory-config.tar.gz  2>${globals.logsPath} || exit 1
         rm -rf /opt/tomcat/conf/digital-factory-config
-        tar xf digital-factory-config.tar.gz -C /
+        tar xf digital-factory-config.tar.gz -C /  2>${globals.logsPath} || exit 1
         chown tomcat:tomcat -R /opt/tomcat/conf
         rm -f digital-factory-config.tar.gz
         rm -rf /data/digital-factory-data/repository/.lock /data/digital-factory-data/repository/workspace /data/digital-factory-data/repository/index
@@ -99,7 +102,7 @@ actions:
     - if ("${response.errOut}" != ""):
         - return:
             type: error
-            message: "An error occurred while restoring jahia configuration."
+            message: "An error occurred while restoring jahia configuration. ${response.errOut}"
 
     - cmd [proc,cp]: |-
         export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
@@ -107,7 +110,7 @@ actions:
         cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
         env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
         cd paas_jelastic_backup
-        python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f jahia-env-vars.gz
+        python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f jahia-env-vars.gz  2>${globals.logsPath} || exit 1
         ls jahia-env-vars.gz || exit 0
     - if ("${response.errOut}" == ""):
         - cmd [proc,cp]: |-
@@ -122,7 +125,7 @@ actions:
         - if ("${response.errOut}" != ""):
             - return:
                 type: error
-                message: "An error occurred while restoring jahia environment variables."
+                message: "An error occurred while restoring jahia environment variables. ${response.errOut}"
     - else:
         log: "No env var backup available"
 
@@ -164,16 +167,16 @@ actions:
         cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
         env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
         cd paas_jelastic_backup
-        python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz || exit 1
+        python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz  2>${globals.logsPath} || exit 1
         case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; "galera") mysql_host="galera";; *) mysql_host="mysqldb"; esac
-        gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h ${mysql_host} --max_allowed_packet=1024M
+        gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h ${mysql_host} --max_allowed_packet=1024M  2>${globals.logsPath} || exit 1
         rm -f jahia.sql.gz
         query="delete from JR_J_LOCAL_REVISIONS"
-        mysql -h ${mysql_host} -u $DB_USER -p$DB_PASSWORD -s jahia -e "$query"
+        mysql -h ${mysql_host} -u $DB_USER -p$DB_PASSWORD -s jahia -e "$query"  2>${globals.logsPath} || exit 1
     - if ("${response.errOut}" != ""):
         - return:
             type: error
-            message: "An error occurred during mysql dump."
+            message: "An error occurred during mysql dump. ${response.errOut}"
 
     - log: "## TEMPORARY FIX FOR RESTORATION: REVOKE ALL ON *.* TO JAHIA'S DB USER"
     - cmd[${nodes.sqldb.master.id}]: |-
