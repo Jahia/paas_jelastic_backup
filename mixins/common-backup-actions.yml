@@ -9,5 +9,5 @@ actions:
       if [ -d paas_jelastic_backup ]; then cd paas_jelastic_backup; git fetch --tags --force; git checkout ${globals.branch}; git pull; echo; else git clone ${globals.git-repos-url}; cd paas_jelastic_backup; git checkout ${globals.branch}; echo; fi
 
   clearJelasticLogs:
-    - cmd[${this}]: echo "" > ${globals.logsPath}; chown $(sed -n 's/^USER=\(.*\)/\1/p' < /.jelenv):root ${globals.logsPath}
+    - cmd[${this.target}]: echo "" > ${globals.logsPath}; chown ${this.user}:root ${globals.logsPath}
       user: root

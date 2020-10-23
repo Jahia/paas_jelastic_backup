@@ -32,7 +32,12 @@ onInstall:
       - setTimestamp
 
   - if (nodes.proc):  # Jahia
-      - clearJelasticLogs: proc, bl
+      - clearJelasticLogs:
+          target: proc
+          user: tomcat
+      - clearJelasticLogs:
+          target: bl
+          user: haproxy
       - installBackupTools: proc
       - if (nodes.bl):  # Haproxy
           - installBackupTools: bl
@@ -43,7 +48,9 @@ onInstall:
       - addMetadata: proc
       - rotateBackups: proc
   - else:  # Jcustomer
-      - clearJelasticLogs: ${nodes.es.first.id}
+      - clearJelasticLogs:
+          target: ${nodes.es.first.id}
+          user: root
       - installBackupTools: ${nodes.es.first.id}
       - backupElasticsearch
       - addMetadata: ${nodes.es.first.id}
