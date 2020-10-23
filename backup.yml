@@ -32,7 +32,7 @@ onInstall:
       - setTimestamp
 
   - if (nodes.proc):  # Jahia
-      - clearJelasticLogs: proc
+      - clearJelasticLogs: proc, bl
       - installBackupTools: proc
       - if (nodes.bl):  # Haproxy
           - installBackupTools: bl
