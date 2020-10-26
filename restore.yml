@@ -51,7 +51,12 @@ onInstall:
       git-repos-url: ${response.git-repos-url}
 
   - if (nodes.proc):  # Jahia
-      - clearJelasticLogs: proc, cp
+      - clearJelasticLogs:
+          target: bl
+          user: haproxy
+      - clearJelasticLogs:
+          target: "proc, cp"
+          user: tomcat
       - installBackupTools: proc,cp
       - if (nodes.bl):
           - installBackupTools: bl
@@ -59,7 +64,9 @@ onInstall:
       - if (nodes.bl):
           - restoreHaproxy
   - else:  # Jcustomer
-      - clearJelasticLogs: ${nodes.es.first.id}
+      - clearJelasticLogs:
+          target: ${nodes.es.first.id}
+          user: root
       - installBackupTools: ${nodes.es.first.id}
       - restoreElasticsearch
 
