@@ -1,0 +1,155 @@
+---
+actions:
+  installMariaDBBackup:
+    - cmd[${this}]: |-
+        yum install -y https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+        yum install -y MariaDB-backup qpress
+      user: root
+
+  backupMariadb:
+    - installMariaDBBackup: ${this}
+    - cmd[${this}]: |-
+        ## [${globals.logAction}] - 2/5
+        export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+        provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
+        cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
+        env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
+        BACKUP_DIR=database-backup
+        BACKUP_NAME=database.tar
+        cd paas_jelastic_backup
+        rm -rf $BACKUP_DIR
+        mkdir $BACKUP_DIR
+        GALERA_INFOS=""
+        if [ "$(mysql -sNe  "show global status like 'wsrep_ready'"|grep ON)" != "" ]; then
+          GALERA_INFOS="--galera-info"
+        fi
+        ionice -n 5 mariabackup --backup --target-dir=$BACKUP_DIR $GALERA_INFOS --compress --compress-threads=2 --user mysql 2>> ${globals.logsPath} || exit 1
+        tar -C "$PWD/$BACKUP_DIR" -cf $BACKUP_NAME . 2>> ${globals.logsPath}
+        python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f $BACKUP_NAME ${globals.argTimestamp} -m ${settings.backtype} 2>>${globals.logsPath} || exit 1
+        rm -rf $BACKUP_DIR $BACKUP_NAME
+    - if ("${response.errOut}" != ""):
+        - return:
+            type: error
+            message: "An error occurred during database backup."
+
+  restoreMariadb:
+    - installMariaDBBackup: sqldb
+    - cmd[sqldb]: |-
+        ## [${globals.logAction}] - 4/5
+        export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+        provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
+        cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
+        env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
+        cd paas_jelastic_backup
+        python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f database.tar 2>>${globals.logsPath}
+        ls database.tar || exit 0
+    - if ("${response.errOut}" == ""):
+        dbRestore
+    - else:
+        - log: "db backup not found, trying legacy"
+        - dbLegacyRestore
+
+  dbRestore:
+    - cmd[sqldb]: |-
+        sudo service mysql stop
+        rm -rf /var/lib/mysql/*
+        cd /var/lib/mysql/
+        mv /home/jelastic/paas_jelastic_backup/database.tar .
+        tar -xf database.tar 2>>${globals.logsPath}
+        rm database.tar
+        mariabackup --decompress --parallel=2 --remove-original --target-dir . 2>>${globals.logsPath} || exit 1
+        mariabackup --prepare --target-dir . 2>>${globals.logsPath} || exit 1
+
+    - if (nodes.sqldb.length > 1):
+        cmd[${nodes.sqldb.first.id}]: |-
+          echo "# GALERA saved state" > /var/lib/mysql/grastate.dat
+          echo "version: 2.1" >> /var/lib/mysql/grastate.dat
+          echo "seqno: -1" >> /var/lib/mysql/grastate.dat
+          echo "safe_to_bootstrap: 1" >> /var/lib/mysql/grastate.dat
+
+    - forEach(i:nodes.sqldb):
+        cmd[${@i.id}]: |-
+          service mysql start
+          rc=$?
+          if [ ! -f /var/lib/mysql/grastate.dat ]; then
+            echo "$HOSTNAME is not in a cluster, exiting"
+            exit $rc
+          fi
+          i=1
+          it=300
+          until [ "$(mysql -Ns -e "show global status like 'wsrep_local_state_comment'" | awk '{print $NF}')" == "Synced"  ]; do
+            echo "$(date) not ready yet (iteration $i/$it)"
+            if [ $i -ge $it ]; then
+              echo "Too long to start, something is wrong here... EXITING"
+              exit 1
+            fi
+            sleep 1
+            ((i++))
+          done
+          echo "Node $HOSTNAME is now Synced !"
+        user: root
+
+    - cmd[${nodes.sqldb.first.id}]: |-
+        # reset jahia user
+        EXISTING_JAHIA_USER=$(mysql -sNe "select user from mysql.user where user like 'jahia-db-%'")
+        mysql -e "DROP USER '${EXISTING_JAHIA_USER}'@'%'; flush privileges"
+        mysql -e "CREATE USER '${DB_USER}'@'%' identified by '${DB_PASS}'"
+        mysql -e "grant all privileges on jahia.* to '${DB_USER}'@'%'"
+        mysql -e "flush privileges"
+
+  dbLegacyRestore:
+    - log: "## TEMPORARY FIX FOR RESTORATION: GRANT ALL ON *.* TO JAHIA'S DB USER"
+    # Starting with mariadb 10.4, jahia's db user is no longer root on database
+    # resulting in the need to connect as 'mysql' user and temporaly grant
+    # jahia's db user in order to successfuly import the dump from processing node.
+    # see here for more details: https://mariadb.org/authentication-in-mariadb-10-4/
+    # next cmd tests if connexion is ok with 'mysql'@'localhost':
+    #   - if ok, so it's >10.4 and we need temporary grants
+    - cmd[${nodes.sqldb.master.id}]: |-
+          if (mysql -se 'select 1' > /dev/null 2>&1); then
+            mysql -e "GRANT ALL PRIVILEGES ON *.* TO '$DB_USER'@'%'"
+          fi
+      user: mysql
+    - cmd [proc]: |-
+        export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
+        provider=$(awk -F'=' '$1=="JEL_CLOUDPROVIDER" {print $2}' /metadata_from_HOST); if [ "$provider" != "aws" ]; then aws_region='eu-west-1'; else aws_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST); fi; export AWS_DEFAULT_REGION="$aws_region"
+        cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
+        env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
+        cd paas_jelastic_backup
+        python3 backrest.py -a download --backupname ${settings.backup_name} --bucketname ${globals.bucketname} -m ${settings.backtype} -t ${settings.timestamp} -f jahia.sql.gz 2>>${globals.logsPath} || exit 1
+        case ${DB_ENDPOINT} in "mysqldb") mysql_host="mysqldb" ;; "proxy") mysql_host=${PROXYSQL_MASTER_IP} ;; "galera") mysql_host="galera";; *) mysql_host="mysqldb"; esac
+        gunzip < jahia.sql.gz | mysql -u$DB_USER -p$DB_PASSWORD -h ${mysql_host} --max_allowed_packet=1024M 2>>${globals.logsPath} || exit 1
+        rm -f jahia.sql.gz
+        query="delete from JR_J_LOCAL_REVISIONS"
+        mysql -h ${mysql_host} -u $DB_USER -p$DB_PASSWORD -s jahia -e "$query" 2>>${globals.logsPath} || exit 1
+    - if ("${response.errOut}" != ""):
+        - return:
+            type: error
+            message: "An error occurred during mysql dump. ${response.errOut}"
+
+    - log: "## TEMPORARY FIX FOR RESTORATION: REVOKE ALL ON *.* TO JAHIA'S DB USER"
+    - cmd[${nodes.sqldb.master.id}]: |-
+          if (mysql -se 'select 1' > /dev/null 2>&1); then
+            mysql -e "REVOKE ALL PRIVILEGES ON *.* FROM '$DB_USER'@'%'"
+          fi
+      user: mysql
+
+  chooseTheBestDatabaseNodeToBackup:
+    - if (nodes.sqldb.length > 1):
+      # choose the node having the lowest number of openened connections
+      - forEach(i:nodes.sqldb):
+          chooseIfLessConnections: ${@i.id}
+    - else:
+        - setGlobals:
+            dbBackupNode: ${nodes.sqldb.first.id}
+
+  chooseIfLessConnections:
+    - cmd[${this}]: mysql -sNe "select count(host) from information_schema.processlist"
+    - if (${response.out} < ${globals.lowerDBConnection}):
+        - setGlobals:
+            lowerDBConnection: ${response.out}
+            dbBackupNode: ${this}
+    - if ("${response.errOut}" != ""):
+        - return:
+            type: error
+            message: "An error occurred during database backup."
