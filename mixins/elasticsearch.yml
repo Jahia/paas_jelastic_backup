@@ -11,7 +11,7 @@ actions:
         region: ${globals.regionRealName_source}
 
     - cmd[${nodes.es.first.id}]: |-
-        curl -s "${nodes.es.first.intIP}:9200" | python -c "import sys, json; print(json.load(sys.stdin)['version']['number'])" 2>${globals.logsPath} || exit 1
+        curl -s "${nodes.es.first.intIP}:9200" | python -c "import sys, json; print(json.load(sys.stdin)['version']['number'])" 2>>${globals.logsPath} || exit 1
     - setGlobals:
         esVersion: ${response.out}
 
@@ -34,7 +34,7 @@ actions:
         ## [${globals.logAction}] - 5/5
         curl -o /dev/null -X DELETE http://${nodes.es.first.intIP}:9200/_all
         timestamp=$(echo "${settings.timestamp}"| awk '{print tolower($0)}')
-        curl -o /tmp/restore-res  -XPOST "${nodes.es.first.intIP}:9200/_snapshot/backup_repository/${timestamp}_${settings.backtype}/_restore" 2>${globals.logsPath} || exit 1
+        curl -o /tmp/restore-res  -XPOST "${nodes.es.first.intIP}:9200/_snapshot/backup_repository/${timestamp}_${settings.backtype}/_restore" 2>>${globals.logsPath} || exit 1
         return_code=$?
         error=$(grep error /tmp/restore-res)
         res=$(wc -l<<<$error)
@@ -77,7 +77,7 @@ actions:
             # Create the bucket if doesn't exists
             export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
             cd paas_jelastic_backup
-            python3 elasticsearch.py --bucketname ${globals.account} --backupname ${settings.backup_name} --cloudprovider=${globals.provider} --operation=backup 2>${globals.logsPath} || exit 1
+            python3 elasticsearch.py --bucketname ${globals.account} --backupname ${settings.backup_name} --cloudprovider=${globals.provider} --operation=backup 2>>${globals.logsPath} || exit 1
         - if ("${globals.provider}" == "aws"):
             - setAwsSnapshotRepository: ${globals.region}
         - else:
@@ -95,7 +95,7 @@ actions:
     - cmd[${nodes.es.first.id}]: |-
         ## [${globals.logAction}] - 3/5
         timestamp=$(echo "${globals.timestamp}"| awk '{print tolower($0)}')
-        curl -o /tmp/backup-res -H 'Content-Type: application/json' -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository/${timestamp}_${settings.backtype}?wait_for_completion=true" 2>${globals.logsPath} || exit 1
+        curl -o /tmp/backup-res -H 'Content-Type: application/json' -XPUT "${nodes.es.first.intIP}:9200/_snapshot/backup_repository/${timestamp}_${settings.backtype}?wait_for_completion=true" 2>>${globals.logsPath} || exit 1
         return_code=$?
         error=$(grep error /tmp/backup-res)
         res=$(wc -l<<<$error)
@@ -118,7 +118,7 @@ actions:
                 ${globals.awsSecretKeyJson}
                 \"base_path\" : \"${settings.backup_name}/elasticsearch\"
             }
-          }" 2>${globals.logsPath} || exit 1
+          }" 2>>${globals.logsPath} || exit 1
 
   setAzureSnapshotRepository:
     - cmd[${nodes.es.first.id}]: |-
@@ -129,7 +129,7 @@ actions:
                 \"container\": \"${settings.backup_name}\",
                 \"base_path\" : \"elasticsearch\"
             }
-          }" 2>${globals.logsPath} || exit 1
+          }" 2>>${globals.logsPath} || exit 1
 
   # Using an Elasticsearch keystore to add AWS keys
   setAwsElasticsearchConfig:
@@ -140,7 +140,7 @@ actions:
             fi
             printf "${settings.aws_access_key}" | /usr/share/elasticsearch/bin/elasticsearch-keystore add -f s3.client.default.access_key
             printf "${settings.aws_secret_key}" | /usr/share/elasticsearch/bin/elasticsearch-keystore add -f s3.client.default.secret_key
-            curl -X POST "${nodes.es.first.intIP}:9200/_nodes/reload_secure_settings" 2>${globals.logsPath} || exit 1
+            curl -X POST "${nodes.es.first.intIP}:9200/_nodes/reload_secure_settings" 2>>${globals.logsPath} || exit 1
         - setGlobals:
             awsAccessKeyJson: ""
             awsSecretKeyJson: ""
@@ -161,7 +161,7 @@ actions:
         fi
         printf "${globals.account}" | /usr/share/elasticsearch/bin/elasticsearch-keystore add -f azure.client.default.account
         printf "${globals.azure_secret}" | /usr/share/elasticsearch/bin/elasticsearch-keystore add -f azure.client.default.key
-        curl -X POST "${nodes.es.first.intIP}:9200/_nodes/reload_secure_settings" 2>${globals.logsPath} || exit 1
+        curl -X POST "${nodes.es.first.intIP}:9200/_nodes/reload_secure_settings" 2>>${globals.logsPath} || exit 1
 
   setAzureElasticsearch5Config:
     - cmd[${nodes.es.first.id}]: |-
@@ -189,7 +189,7 @@ actions:
     - cmd[${nodes.es.first.id}]: |-
         export AWS_ACCESS_KEY_ID="${settings.aws_access_key}" AWS_SECRET_ACCESS_KEY="${settings.aws_secret_key}"
         cd paas_jelastic_backup
-        python3 elasticsearch.py --bucketname ${globals.account} --backupname ${settings.backup_name} --cloudprovider=azure --operation=${this.operation} 2>${globals.logsPath} || exit 1
+        python3 elasticsearch.py --bucketname ${globals.account} --backupname ${settings.backup_name} --cloudprovider=azure --operation=${this.operation} 2>>${globals.logsPath} || exit 1
     - cmd[${nodes.es.first.id}]: |-
         cat /tmp/azurecred
         rm -f /tmp/azurecred
@@ -213,7 +213,7 @@ actions:
           - replica: 0
     - cmd[${nodes.es.first.id}]: |-
         curl -s http://$(hostname):9200/_cat/shards | awk '{print $1}' | sort | uniq | while read index; do
-            curl -H 'Content-Type: application/json' -s -XPUT http://$(hostname):9200/$(echo $index)/_settings -d '{"index":{"number_of_replicas": ${globals.replica} }}' 2>${globals.logsPath}
+            curl -H 'Content-Type: application/json' -s -XPUT http://$(hostname):9200/$(echo $index)/_settings -d '{"index":{"number_of_replicas": ${globals.replica} }}' 2>>${globals.logsPath}
         done
 
   rotateElasticsearchBackup:
