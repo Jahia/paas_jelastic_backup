@@ -105,7 +105,8 @@ actions:
         rm -f digital-factory-config.tar.gz
         rm -rf /data/digital-factory-data/repository/.lock /data/digital-factory-data/repository/workspace /data/digital-factory-data/repository/index
         if [ $(echo $DX_VERSION | sed 's/\.//g') -lt 7232 ]; then touch /data/digital-factory-data/backup-restore; else touch /data/digital-factory-data/safe-env-clone; fi;
-        sed -i "s|^cluster.node.serverId.*|cluster.node.serverId = $HOSTNAME|g" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
+        short_name=$(echo ${_ROLE}.$HOSTNAME | sed -r 's/^([a-Z]+)\.[a-Z]+([0-9]+)-.+$/\1.\2/' | tr 'A-Z' 'a-z')
+        sed -i "s|^cluster.node.serverId.*|cluster.node.serverId = $short_name|" $STACK_PATH/conf/digital-factory-config/jahia/jahia.node.properties
     - if ("${response.errOut}" != ""):
         - return:
             type: error
@@ -201,6 +202,30 @@ actions:
         - milliseconds: 120000
     - cmd [cp]:
         - sudo service tomcat start
+
+    # Following is for remove deprecated entries in JR_J_LOCAL_REVISIONS if any
+    - sleep:
+        - milliseconds: 60000
+    - cmd [proc]:
+        - awk '$1=="cluster.node.serverId" {print $NF; exit}' /opt/tomcat/conf/digital-factory-config/jahia/jahia.node.properties
+    - writeFile:
+        nodegroup: proc
+        path: /tmp/nodesList
+        body: ${response.out}
+    - forEach(nodes.cp):
+        - cmd [${@i.id}]:
+            - awk '$1=="cluster.node.serverId" {print $NF; exit}' /opt/tomcat/conf/digital-factory-config/jahia/jahia.node.properties
+        - appendFile:
+            nodegroup: proc
+            path: /tmp/nodesList
+            body: ${response.out}
+    - cmd [proc]: |-
+        sql_cmd="mysql -E -u $DB_USER -p$DB_PASSWORD -h galera -D jahia"
+        query="DELETE from JR_J_LOCAL_REVISIONS where "
+        cond=$(while read line; do echo -n "JOURNAL_ID!=\"$line\" AND "; done < /tmp/nodesList | sed 's/\s*AND\s*$//')
+        echo $sql_cmd -e \'$query $cond\' > /tmp/nodesList.sh
+        bash /tmp/nodesList.sh
+        rm -f /tmp/nodesList*
 
   envSource:
     - script: |
