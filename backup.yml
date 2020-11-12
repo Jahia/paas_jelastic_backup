@@ -72,7 +72,11 @@ actions:
         cluster_role=$(awk -F'=' '$1=="JEL_ENV_ROLE" {print $2}' /metadata_from_HOST); export cluster_role
         env_region=$(awk -F'=' '$1=="JEL_REGION" {print $2}' /metadata_from_HOST | sed 's/[[:punct:]]//g'); export env_region
         cd paas_jelastic_backup
-        tar -czvf digital-factory-data.tar.gz -C / data/digital-factory-data/
+        tar -czf digital-factory-data.tar.gz -C / data/digital-factory-data/
+        if [ "$?" -gt 1 ]; then
+          echo "tar command return an error code greater than 1. Exiting"
+          exit 1
+        fi
         python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f digital-factory-data.tar.gz ${globals.argTimestamp} -m ${settings.backtype} || exit 1
         rm -f digital-factory-data.tar.gz
     - if ("${response.errOut}" != ""):
