@@ -2,8 +2,10 @@
 actions:
   installMariaDBBackup:
     - cmd[${this}]: |-
-        yum install -y https://repo.percona.com/yum/percona-release-latest.noarch.rpm
-        yum install -y MariaDB-backup qpress
+        if [[ ! -x /usr/bin/mariabackup ]]; then
+          yum install -y https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+          yum install -y MariaDB-backup qpress
+        fi
       user: root
 
   backupMariadb:
