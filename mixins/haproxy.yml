@@ -36,6 +36,10 @@ actions:
         gunzip haproxy-00-global.cfg.gz
         mv haproxy-00-global.cfg /etc/haproxy/haproxy.cfg.d/00-global.cfg
         sed -ie 's/use_backend proc\(.*\)beg s\(.*\)/use_backend proc\1beg s${nodes.proc.first.id} }/g' /etc/haproxy/haproxy.cfg.d/00-global.cfg
+        checkLine=$(head /etc/haproxy/haproxy.cfg.d/00-global.cfg | grep external-check)
+        if [ "$checkLine" = "" ]; then
+          sed -i '8 a\    external-check' /etc/haproxy/haproxy.cfg.d/00-global.cfg
+        fi
         sudo service haproxy reload
     - if ("${response.errOut}" != ""):
         - return:
