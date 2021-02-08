@@ -14,6 +14,7 @@ mixins:
   - mixins/elasticsearch.yml
   - mixins/haproxy.yml
   - mixins/database.yml
+  - mixins/jcustomer.yml
 
 onInstall:
   - if(settings.cloud_source):
@@ -73,6 +74,7 @@ onInstall:
           user: root
       - installBackupTools: ${nodes.es.first.id}
       - restoreElasticsearch
+      - checkJcustomerHealth: cp
 
 
 actions:
@@ -169,11 +171,11 @@ actions:
     - cmd [proc]: |-
         ## [${globals.logAction}] - 5/5
         sudo service tomcat start
-    - log: "## Waiting a bit before starting browsing's tomcat"
-    - sleep:
-        - milliseconds: 120000
+    - startupJahiaHealthCheck: proc
+
     - cmd [cp]:
         - sudo service tomcat start
+    - startupJahiaHealthCheck: cp
 
     # Following is for remove deprecated entries in JR_J_LOCAL_REVISIONS if any
     - sleep:
@@ -238,6 +240,55 @@ actions:
         cloudProvider_source: ${response.cloudProvider}
         az_source: ${response.az}
         envRole_source: ${response.envRole}
+
+  startupJahiaHealthCheck:
+    - cmd [${this}]: |-
+        if ! tomcat_pid=$(pgrep -u tomcat -f java); then
+          echo "[ERROR] Tomcat process not found, please check." >&2
+          exit 1
+        fi
+
+        if [ ! -f /var/log/tomcat/jahia.log ]; then
+          echo "[ERROR] Jahia log file not found, it seems there is a problem with tomcat instance, please check." >&2
+          exit 2
+        fi
+
+        startup_line=$(grep -n "s t a r t i n g" /opt/tomcat/logs/catalina.out | tail -n1 | cut -d":" -f1)
+        timeout=$(($(date +%M) + $HEALTHCHECK_DURATION))
+        hc_url="http://127.0.0.1:8080/modules/healthcheck?token=$jahia_cfg_healthcheck_token"
+
+        # Number of minutes allowed for healthcheck to be completed once tomcat startup is finished
+        jahia_running_timeout=5
+
+        while [ $(date +%M) -lt $timeout ]; do
+          # First we test if Jahia is up with a curl request.
+          if curl_resp=$(curl -f -s -m 1 "$hc_url"); then
+            status=$(echo $curl_resp | jq -r ".status")
+            if [ "$status" = "GREEN" ] || [ "$status" = "YELLOW" ]; then
+              exit 0
+            fi
+          fi
+
+          # If it isn't, we first check tomcat process status
+          if ! ps --pid $tomcat_pid > /dev/null; then
+            echo "[ERROR] Tomcat process no more running, please check." >&2
+            exit 3
+          fi
+          # Then we check Jahia startup status, all
+          tail -n +${startup_line} /opt/tomcat/logs/catalina.out | grep -q "Server startup in"
+          if [ $? -eq 0 ]; then
+            if [ $jahia_running_timeout -eq 0 ]; then
+              echo "[ERROR] Tomcat startup is finished but healthcheck failed, please check." >&2
+              exit 4
+            fi
+            ((jahia_running_timeout-=1))
+          fi
+
+          sleep 60
+        done
+
+        echo "[ERROR] Timeout, the Tomcat process is still running but Jahia is not started yet" >&2
+        exit 5
 
 
 settings:
