@@ -1,0 +1,19 @@
+---
+
+actions:
+  checkJcustomerHealth:
+    cmd [${this}]: |-
+        log_file="/var/log/jelastic-packages/checkJcustomerHealthWhenStarting"
+        setenv=$(find /opt/jcustomer/jcustomer/bin -name setenv)
+        karaf_pwd=$(grep UNOMI_ROOT_PASSWORD $setenv | cut -d"=" -f2 | sed 's,\s\+,,g')
+        timeout=60
+        echo "Jcustomer is starting...." >> $log_file
+        echo "Waiting for cxs/privacy/info to be ok" >> $log_file
+        while [ $timeout -gt 0 ]; do
+          curl -fsI /dev/null -u "karaf:$karaf_pwd" http://localhost:80/cxs/privacy/info && exit 0
+          sleep 1
+          let "timeout-=1"
+        done
+        echo "60 seconds timeout exeeded, exiting with error" >> $log_file
+        exit 1
+    user: root
