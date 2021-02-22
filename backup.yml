@@ -173,11 +173,6 @@ settings:
       caption: AWS Secret Key
       vtype: text
       required: true
-    - name: gitrepo
-    - name: env
-      type: string
-      required: true
-      default: prod
     - name: timestamp
       caption: timestamp in format %Y-%m-%dT%H:%M:00
       required: false

@@ -328,10 +328,6 @@ settings:
       values:
         dev: dev
         prod: prod
-    - name: env
-      type: string
-      required: true
-      default: prod
     - name: timestamp
       caption: timestamp in format %Y-%m-%dT%H:%M:00
       required: true
