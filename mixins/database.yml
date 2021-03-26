@@ -25,7 +25,7 @@ actions:
         if [ "$(mysql -sNe  "show global status like 'wsrep_ready'"|grep ON)" != "" ]; then
           GALERA_INFOS="--galera-info"
         fi
-        ionice -n 5 mariabackup --backup --target-dir=$BACKUP_DIR $GALERA_INFOS --compress --compress-threads=2 --user mysql 2>> ${globals.logsPath} || exit 1
+        ionice -n 5 mariabackup --backup --target-dir=$BACKUP_DIR $GALERA_INFOS --compress --compress-threads=2 --user mysql 2>> ${globals.logsPath} || exit 1
         tar -C "$PWD/$BACKUP_DIR" -cf $BACKUP_NAME . 2>> ${globals.logsPath}
         python3 backrest.py -a upload --bucketname jc${cluster_role}${env.uid}${env_region} --backupname ${settings.backup_name} -f $BACKUP_NAME ${globals.argTimestamp} -m ${settings.backtype} 2>>${globals.logsPath} || exit 1
         rm -rf $BACKUP_DIR $BACKUP_NAME
@@ -98,11 +98,12 @@ actions:
         user: root
 
     - cmd[${nodes.sqldb.first.id}]: |-
-        # reset jahia user
+        # reset jahia user and datadog user password
         EXISTING_JAHIA_USER=$(mysql -sNe "select user from mysql.user where user like 'jahia-db-%'")
         mysql -e "DROP USER '${EXISTING_JAHIA_USER}'@'%'; flush privileges"
         mysql -e "CREATE USER '${DB_USER}'@'%' identified by '${DB_PASS}'"
         mysql -e "grant all privileges on jahia.* to '${DB_USER}'@'%'"
+        mysql -e "set password for 'datadog'@'localhost' = PASSWORD('${DB_USER_DATADOG}')"
         mysql -e "flush privileges"
 
   dbLegacyRestore:
